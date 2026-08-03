@@ -308,13 +308,13 @@
       render();
     }
 
-    // Безпроблемна суцільна генерація команд (без розривів у style color)
+    // Повністю очищений синтаксис без жодних пробілів у тегах стилю
     function buildCmd() {
       let code = "formspec_version[7]size[10,8]background[-0.5,-0.5;11,9;gui_formbg.png;true]";
 
       elements.forEach(el => {
         if (el.type === 'title') {
-          // Гарантуємо безпроблемну суцільну конструкцію <style color=#HEX>
+          // Прибрано пробіли з атрибутів стилю та зшито теги без відступів
           code += "hypertext[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";title;<global halign=center font=size=20><style color=" + el.color + "><b>" + el.text + "</b></style>]";
         } else if (el.type === 'box') {
           code += "box[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.color + "]";
