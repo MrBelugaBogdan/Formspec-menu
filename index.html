@@ -5,55 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MultiCraft Formspec Builder</title>
   <style>
-    * { box-sizing: border-box; font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    body { background: #18181c; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
+    body { background: #121216; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
     /* Екран авторизації */
-    #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #111116; text-align: center; }
-    #auth-screen input { padding: 10px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; margin-top: 10px; width: 250px; text-align: center; }
-    #auth-screen button { padding: 10px 20px; border-radius: 6px; border: none; background: #0fc5f7; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #0c0c10; text-align: center; }
+    #auth-screen h2 { color: #0fc5f7; font-size: 24px; margin-bottom: 8px; }
+    #auth-screen p { color: #888; font-size: 14px; margin-bottom: 15px; }
+    #auth-screen input { padding: 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a22; color: #fff; width: 260px; text-align: center; font-size: 16px; margin-bottom: 12px; outline: none; }
+    #auth-screen input:focus { border-color: #0fc5f7; }
+    #auth-screen button { padding: 12px 24px; border-radius: 8px; border: none; background: #0fc5f7; color: #000; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s; }
+    #auth-screen button:hover { background: #38d6ff; transform: scale(1.03); }
 
     /* Основний інтерфейс */
     #app { display: none; flex-direction: column; height: 100vh; }
-    header { background: #111116; padding: 12px 20px; border-bottom: 2px solid #0fc5f7; display: flex; justify-content: space-between; align-items: center; }
-    header h1 { font-size: 18px; color: #0fc5f7; }
+    header { background: #16161e; padding: 12px 20px; border-bottom: 2px solid #0fc5f7; display: flex; justify-content: space-between; align-items: center; }
+    header h1 { font-size: 19px; color: #0fc5f7; display: flex; align-items: center; gap: 8px; }
 
     .main-layout { display: flex; flex: 1; overflow: hidden; }
 
     /* Ліва панель */
-    .sidebar { width: 240px; background: #22222a; padding: 15px; border-right: 1px solid #333; }
-    .sidebar h3 { font-size: 13px; text-transform: uppercase; color: #888; margin-bottom: 12px; }
-    .btn-add { width: 100%; padding: 10px; margin-bottom: 8px; background: #333340; color: #fff; border: 1px solid #444; border-radius: 6px; cursor: pointer; text-align: left; }
-    .btn-add:hover { background: #0fc5f7; color: #000; font-weight: bold; }
+    .sidebar { width: 250px; background: #1a1a24; padding: 15px; border-right: 1px solid #2a2a36; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+    .sidebar h3 { font-size: 12px; text-transform: uppercase; color: #777; margin-bottom: 6px; letter-spacing: 0.5px; }
+    .btn-add { width: 100%; padding: 11px 12px; background: #252533; color: #eee; border: 1px solid #343446; border-radius: 7px; cursor: pointer; text-align: left; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; transition: 0.15s; }
+    .btn-add:hover { background: #0fc5f7; color: #000; font-weight: bold; border-color: #0fc5f7; }
 
     /* Полотно GUI (Canvas) */
-    .canvas-container { flex: 1; background: #141418; display: flex; justify-content: center; align-items: center; padding: 20px; }
-    .gui-box { width: 500px; height: 400px; background: #2c2c35; border: 4px solid #444; position: relative; border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .canvas-container { flex: 1; background: #0e0e12; display: flex; justify-content: center; align-items: center; padding: 20px; position: relative; }
+    .gui-box { width: 500px; height: 400px; background: #2c2c36 url('https://raw.githubusercontent.com/minetest/minetest_game/master/mods/default/textures/gui_formbg.png') repeat; border: 4px solid #444; position: relative; border-radius: 6px; box-shadow: 0 12px 35px rgba(0,0,0,0.7); }
 
     /* Елементи на полотні */
-    .gui-el { position: absolute; background: rgba(15, 197, 247, 0.25); border: 2px dashed #0fc5f7; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: move; user-select: none; border-radius: 4px; box-sizing: border-box; }
-    .gui-el.active { border: 2px solid #ff0055; background: rgba(255, 0, 85, 0.3); }
+    .gui-el { position: absolute; border: 2px dashed #0fc5f7; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: move; user-select: none; border-radius: 4px; box-sizing: border-box; text-shadow: 1px 1px 2px #000; font-weight: 600; text-align: center; word-break: break-word; padding: 2px; }
+    .gui-el.active { border: 2px solid #ff0055 !important; box-shadow: 0 0 10px rgba(255, 0, 85, 0.6); }
 
-    /* Права панель */
-    .properties { width: 260px; background: #22222a; padding: 15px; border-left: 1px solid #333; }
-    .prop-group { margin-bottom: 12px; }
-    .prop-group label { display: block; font-size: 12px; color: #aaa; margin-bottom: 4px; }
-    .prop-group input { width: 100%; padding: 8px; background: #141418; border: 1px solid #444; color: #fff; border-radius: 4px; }
+    /* Спеціальні види елементів */
+    .gui-el.type-box { border-style: solid; }
+    .gui-el.type-item_btn, .gui-el.type-item_img { background: rgba(0,0,0,0.4); border: 2px solid #555; border-radius: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .gui-el .item-icon { font-size: 18px; margin-bottom: 2px; }
+    .gui-el .item-id-tag { font-size: 10px; color: #0fc5f7; background: rgba(0,0,0,0.7); padding: 1px 4px; border-radius: 3px; font-family: monospace; }
+
+    /* Права панель редагування */
+    .properties { width: 280px; background: #1a1a24; padding: 15px; border-left: 1px solid #2a2a36; overflow-y: auto; }
+    .prop-group { margin-bottom: 14px; }
+    .prop-group label { display: block; font-size: 12px; color: #aaa; margin-bottom: 5px; }
+    .prop-group input[type="text"], .prop-group input[type="number"], .prop-group select { width: 100%; padding: 8px 10px; background: #121218; border: 1px solid #333; color: #fff; border-radius: 5px; font-size: 13px; outline: none; }
+    .prop-group input[type="text"]:focus, .prop-group input[type="number"]:focus { border-color: #0fc5f7; }
+    .color-picker-row { display: flex; gap: 8px; align-items: center; }
+    .color-picker-row input[type="color"] { border: none; width: 40px; height: 35px; border-radius: 5px; background: transparent; cursor: pointer; }
+    .color-picker-row input[type="text"] { flex: 1; }
 
     /* Нижня панель копіювання */
-    .footer { background: #111116; padding: 12px 20px; border-top: 1px solid #333; display: flex; gap: 10px; align-items: center; }
-    .footer textarea { flex: 1; height: 50px; background: #18181c; border: 1px solid #444; color: #0fc5f7; padding: 8px; font-family: monospace; font-size: 11px; resize: none; border-radius: 4px; }
-    .btn-copy { background: #0fc5f7; color: #000; border: none; padding: 0 25px; height: 50px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 14px; }
-    .btn-copy:hover { background: #029ec8; }
+    .footer { background: #16161e; padding: 12px 20px; border-top: 1px solid #2a2a36; display: flex; gap: 12px; align-items: center; }
+    .footer textarea { flex: 1; height: 55px; background: #101014; border: 1px solid #333; color: #0fc5f7; padding: 10px; font-family: monospace; font-size: 12px; resize: none; border-radius: 6px; outline: none; }
+    .btn-copy { background: #0fc5f7; color: #000; border: none; padding: 0 25px; height: 55px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 14px; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
+    .btn-copy:hover { background: #38d6ff; }
   </style>
 </head>
 <body>
 
   <!-- Захист паролем -->
   <div id="auth-screen">
-    <h2 style="color: #0fc5f7;">🔒 Вхід для розробників</h2>
-    <p style="color: #888; margin-top: 5px; font-size: 14px;">Введіть секретний ключ для доступу</p>
-    <input type="password" id="pass-input" placeholder="Пароль...">
+    <h2>🔒 Вхід до Builder</h2>
+    <p>Введіть пароль або відкрийте посилання з ключем</p>
+    <input type="password" id="pass-input" placeholder="Введіть пароль..." onkeyup="if(event.key==='Enter') checkAuth()">
     <button onclick="checkAuth()">Увійти</button>
   </div>
 
@@ -61,65 +75,89 @@
   <div id="app">
     <header>
       <h1>🛠️ MultiCraft Formspec Builder</h1>
-      <span style="font-size: 12px; color: #888;">Для книг / блоків</span>
+      <span style="font-size: 12px; color: #888;">Ключ доступу: <b style="color:#0fc5f7;">агуша</b></span>
     </header>
 
     <div class="main-layout">
+      <!-- Ліва панель додавання -->
       <div class="sidebar">
-        <h3>Додати елемент</h3>
-        <button class="btn-add" onclick="createEl('title')">📝 Заголовок</button>
+        <h3>Текст і Заголовки</h3>
+        <button class="btn-add" onclick="createEl('title')">📝 Текст / Заголовок</button>
+        
+        <h3>Предмети і Блоки</h3>
         <button class="btn-add" onclick="createEl('item_btn')">💎 Предмет-Кнопка</button>
-        <button class="btn-add" onclick="createEl('field')">📥 Поле вводу</button>
+        <button class="btn-add" onclick="createEl('item_img')">🧱 Блок / Предмет (Картинка)</button>
+        
+        <h3>Дизайн та Фони</h3>
+        <button class="btn-add" onclick="createEl('box')">🟦 Кольоровий Квадрат (Box)</button>
+
+        <h3>Інтерфейс</h3>
+        <button class="btn-add" onclick="createEl('field')">📥 Поле вводу (Field)</button>
         <button class="btn-add" onclick="createEl('close_btn')">❌ Кнопка "Закрити"</button>
       </div>
 
+      <!-- Полотно -->
       <div class="canvas-container">
         <div class="gui-box" id="canvas"></div>
       </div>
 
+      <!-- Права панель налаштувань -->
       <div class="properties">
-        <h3 style="margin-bottom: 15px;">Налаштування</h3>
+        <h3 style="margin-bottom: 12px; font-size: 13px; color: #888; text-transform: uppercase;">Властивості елемента</h3>
         <div id="prop-editor">
-          <p style="color: #666; font-size: 13px;">Клікни на елемент для редагування</p>
+          <p style="color: #666; font-size: 13px;">Клікніть на будь-який елемент на екрані, щоб налаштувати його.</p>
         </div>
       </div>
     </div>
 
+    <!-- Нижня панель з готовим кодом -->
     <div class="footer">
       <textarea id="cmd-result" readonly></textarea>
-      <button class="btn-copy" onclick="copyResult()">📋 Копіювати команду</button>
+      <button class="btn-copy" onclick="copyResult()">📋 Скопіювати команду</button>
     </div>
   </div>
 
   <script>
-    // ЗМІНИ ПАРОЛЬ ТУТ (за замовчуванням: 1234)
-    const SECRET_KEY = "1234";
+    // СЕКРЕТНИЙ КЛЮЧ
+    const SECRET_KEY = "агуша";
 
-    // Перевірка доступу (включаючи доступ за посиланням типу ?key=1234)
     function checkAuth() {
       const urlParams = new URLSearchParams(window.location.search);
       const keyFromUrl = urlParams.get('key');
-      const inputPass = document.getElementById('pass-input').value;
+      const inputPass = document.getElementById('pass-input').value.trim();
 
       if (keyFromUrl === SECRET_KEY || inputPass === SECRET_KEY) {
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('app').style.display = 'flex';
       } else if (inputPass !== "") {
-        alert("Невірний пароль!");
+        alert("Невірний пароль! Спробуйте ще раз.");
       }
     }
     window.onload = checkAuth;
 
-    // Логіка конструктора
     let elements = [];
     let selectedId = null;
 
     function createEl(type) {
       const id = Date.now();
-      let newEl = { id, type, x: 1, y: 1, w: 3, h: 1, text: "Текст", item: "default:diamond", key: "btn_" + id };
+      let newEl = { 
+        id, 
+        type, 
+        x: 1, 
+        y: 1, 
+        w: 3, 
+        h: 1, 
+        text: "Текст", 
+        color: "#0fc5f7", 
+        item: "default:diamond", 
+        key: "btn_" + id 
+      };
       
-      if(type === 'title') { newEl.w = 8; newEl.text = "МАГАЗИН"; }
-      if(type === 'item_btn') { newEl.w = 1.5; newEl.h = 1.5; newEl.text = "Купити"; }
+      if(type === 'title') { newEl.w = 6; newEl.h = 0.8; newEl.text = "МАГАЗИН ПРЕДМЕТІВ"; }
+      if(type === 'item_btn') { newEl.w = 1.5; newEl.h = 1.5; newEl.text = "Купити"; newEl.item = "default:diamond"; }
+      if(type === 'item_img') { newEl.w = 1.5; newEl.h = 1.5; newEl.item = "default:pick_mese"; }
+      if(type === 'box') { newEl.w = 4; newEl.h = 2; newEl.color = "#111118"; }
+      if(type === 'close_btn') { newEl.w = 4; newEl.h = 0.8; newEl.text = "Закрити"; }
 
       elements.push(newEl);
       selectEl(id);
@@ -137,17 +175,32 @@
 
       elements.forEach(el => {
         const div = document.createElement('div');
-        div.className = `gui-el ${el.id === selectedId ? 'active' : ''}`;
+        div.className = `gui-el type-${el.type} ${el.id === selectedId ? 'active' : ''}`;
         
-        // 1 одиниця Formspec = 50 пікселів на екрані
+        // 1 unit = 50px
         div.style.left = (el.x * 50) + 'px';
         div.style.top = (el.y * 50) + 'px';
         div.style.width = (el.w * 50) + 'px';
         div.style.height = (el.h * 50) + 'px';
 
-        div.innerText = el.type === 'item_btn' ? `[${el.item}]` : el.text;
+        // Стилізація та контент
+        if (el.type === 'title') {
+          div.style.color = el.color;
+          div.innerText = el.text;
+        } else if (el.type === 'box') {
+          div.style.background = el.color;
+          div.innerText = "";
+        } else if (el.type === 'item_btn' || el.type === 'item_img') {
+          div.innerHTML = `
+            <div class="item-icon">📦</div>
+            <div class="item-id-tag">${el.item}</div>
+            ${el.type === 'item_btn' ? `<div style="font-size:11px; margin-top:2px;">${el.text}</div>` : ''}
+          `;
+        } else {
+          div.innerText = el.text;
+        }
 
-        // Перетягування мишкою (Drag and Drop)
+        // Drag & Drop
         div.onmousedown = function(e) {
           e.stopPropagation();
           selectEl(el.id);
@@ -186,26 +239,66 @@
         return;
       }
 
-      editor.innerHTML = `
-        <div class="prop-group">
-          <label>Текст / Назва:</label>
-          <input type="text" value="${el.text}" oninput="updateVal('text', this.value)">
+      let html = '';
+
+      if (el.type === 'title' || el.type === 'field' || el.type === 'item_btn' || el.type === 'close_btn') {
+        html += `
+          <div class="prop-group">
+            <label>Текст / Назва:</label>
+            <input type="text" value="${el.text}" oninput="updateVal('text', this.value)">
+          </div>
+        `;
+      }
+
+      if (el.type === 'title' || el.type === 'box') {
+        html += `
+          <div class="prop-group">
+            <label>Колір (${el.type === 'box' ? 'Фону' : 'Тексту'}):</label>
+            <div class="color-picker-row">
+              <input type="color" value="${el.color}" oninput="updateVal('color', this.value); this.nextElementSibling.value=this.value;">
+              <input type="text" value="${el.color}" oninput="updateVal('color', this.value); this.previousElementSibling.value=this.value;">
+            </div>
+          </div>
+        `;
+      }
+
+      if (el.type === 'item_btn' || el.type === 'item_img') {
+        html += `
+          <div class="prop-group">
+            <label>ID Блока / Предмета MultiCraft:</label>
+            <input type="text" value="${el.item}" placeholder="наприклад, default:diamond" oninput="updateVal('item', this.value)">
+            <span style="font-size:11px; color:#777; margin-top:4px; display:block;">Приклади: default:dirt, default:pick_mese, default:apple</span>
+          </div>
+        `;
+      }
+
+      html += `
+        <div style="display:flex; gap:10px;">
+          <div class="prop-group" style="flex:1;">
+            <label>Ширина (W):</label>
+            <input type="number" step="0.5" value="${el.w}" onchange="updateVal('w', parseFloat(this.value))">
+          </div>
+          <div class="prop-group" style="flex:1;">
+            <label>Висота (H):</label>
+            <input type="number" step="0.5" value="${el.h}" onchange="updateVal('h', parseFloat(this.value))">
+          </div>
         </div>
-        ${el.type === 'item_btn' ? `
-        <div class="prop-group">
-          <label>Предмет (ID):</label>
-          <input type="text" value="${el.item}" oninput="updateVal('item', this.value)">
-        </div>` : ''}
-        <div class="prop-group">
-          <label>Позиція X:</label>
-          <input type="number" step="0.5" value="${el.x}" onchange="updateVal('x', parseFloat(this.value))">
+
+        <div style="display:flex; gap:10px;">
+          <div class="prop-group" style="flex:1;">
+            <label>Позиція X:</label>
+            <input type="number" step="0.5" value="${el.x}" onchange="updateVal('x', parseFloat(this.value))">
+          </div>
+          <div class="prop-group" style="flex:1;">
+            <label>Позиція Y:</label>
+            <input type="number" step="0.5" value="${el.y}" onchange="updateVal('y', parseFloat(this.value))">
+          </div>
         </div>
-        <div class="prop-group">
-          <label>Позиція Y:</label>
-          <input type="number" step="0.5" value="${el.y}" onchange="updateVal('y', parseFloat(this.value))">
-        </div>
-        <button onclick="removeEl(${el.id})" style="background:#ff3355; color:#fff; border:none; padding:8px; width:100%; border-radius:4px; cursor:pointer; margin-top:10px;">🗑️ Видалити</button>
+
+        <button onclick="removeEl(${el.id})" style="background:#ff3355; color:#fff; border:none; padding:9px; width:100%; border-radius:5px; cursor:pointer; font-weight:bold; margin-top:10px;">🗑️ Видалити елемент</button>
       `;
+
+      editor.innerHTML = html;
     }
 
     function updateVal(key, val) {
@@ -223,15 +316,19 @@
       render();
     }
 
-    // Генерація команди
+    // Генератор команди
     function buildCmd() {
       let code = "formspec_version[7]size[10,8]background[-0.5,-0.5;11,9;gui_formbg.png;true]";
 
       elements.forEach(el => {
         if (el.type === 'title') {
-          code += `hypertext[${el.x},${el.y};${el.w},${el.h};title;<global halign=center font=size=20><style color=#0fc5f7><b>${el.text}</b></style>]`;
+          code += `hypertext[${el.x},${el.y};${el.w},${el.h};title;<global halign=center font=size=20><style color=${el.color}><b>${el.text}</b></style>]`;
+        } else if (el.type === 'box') {
+          code += `box[${el.x},${el.y};${el.w},${el.h};${el.color}]`;
         } else if (el.type === 'item_btn') {
           code += `item_image_button[${el.x},${el.y};${el.w},${el.h};${el.item};${el.key};${el.text}]`;
+        } else if (el.type === 'item_img') {
+          code += `item_image[${el.x},${el.y};${el.w},${el.h};${el.item}]`;
         } else if (el.type === 'field') {
           code += `field[${el.x},${el.y};${el.w},${el.h};${el.key};${el.text};1]`;
         } else if (el.type === 'close_btn') {
@@ -247,7 +344,7 @@
       const txt = document.getElementById("cmd-result");
       txt.select();
       navigator.clipboard.writeText(txt.value);
-      alert("✅ Команду скопійовано! Вставляй її в гру.");
+      alert("✅ Команду скопійовано! Вставляй її в гру MultiCraft.");
     }
   </script>
 </body>
