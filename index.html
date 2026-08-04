@@ -117,8 +117,7 @@
 
   <script>
     // SHA-256 Хеш для ключа "агуша" (Пароля в коді немає!)
-    const PASSPHRASE_HASH = "e3f169f4ea54efdc7dc1b6fb95932df4c29d0bc6505b821f92e340c2105a5a17";
-
+    const PASSPHRASE_HASH = "361ed1bc7d727a20c9040778c8a1496a7df19363533ecb23e20600bc324bcbc0";
     async function hashString(str) {
       const msgBuffer = new TextEncoder().encode(str);
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
