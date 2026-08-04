@@ -8,7 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
-    body { background: #121216; color: #fff; display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
+    body { background: #121216; color: #fff; display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; touch-action: none; }
 
     /* Екран авторизації */
     #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #0c0c10; text-align: center; padding: 20px; }
@@ -36,7 +36,7 @@
     .btn-add:hover { background: #0fc5f7; color: #000; border-color: #0fc5f7; }
 
     /* Полотно GUI */
-    .canvas-container { flex: 1; background: #0e0e12; display: flex; justify-content: center; align-items: center; padding: 10px; overflow: auto; position: relative; touch-action: manipulation; }
+    .canvas-container { flex: 1; background: #0e0e12; display: flex; justify-content: center; align-items: center; padding: 10px; overflow: auto; position: relative; }
     .gui-box { width: 500px; height: 400px; min-width: 500px; min-height: 400px; background: #2c2c36 url('https://raw.githubusercontent.com/minetest/minetest_game/master/mods/default/textures/gui_formbg.png') repeat; border: 4px solid #444; position: relative; border-radius: 6px; box-shadow: 0 12px 35px rgba(0,0,0,0.7); touch-action: none; }
 
     /* Елементи полотна */
@@ -63,7 +63,7 @@
     /* Мобільна адаптація */
     @media (max-width: 850px) {
       .main-layout { flex-direction: column; overflow-y: auto; }
-      .sidebar, .properties { width: 100%; border: none; border-bottom: 1px solid #2a2a36; max-height: 200px; }
+      .sidebar, .properties { width: 100%; border: none; border-bottom: 1px solid #2a2a36; max-height: 180px; }
       .canvas-container { min-height: 420px; overflow: auto; padding: 10px; justify-content: flex-start; align-items: flex-start; }
       .footer { flex-direction: column; }
       .footer textarea { width: 100%; height: 45px; }
@@ -85,7 +85,7 @@
   <div id="app">
     <header>
       <h1>🛠️ MultiCraft Formspec Builder</h1>
-      <span style="font-size: 11px; color: #888;">Пароль: admin12345</span> <!-- Фейкова підказка -->
+      <span style="font-size: 11px; color: #888;">Пароль: admin12345</span>
     </header>
 
     <div class="main-layout">
@@ -118,7 +118,6 @@
   </div>
 
   <script>
-    // Хеш перевірки доступу паролю sosohoyloxnishiyaaahahahaha
     const PASSPHRASE_HASH = "9096095f6d674a667399b067ee3df916";
 
     function checkAuth() {
@@ -190,22 +189,31 @@
           div.innerText = el.text;
         }
 
-        const startDrag = (e) => {
+        // Логіка перетягування для Мишки та Сенсора (Touch)
+        const initDrag = (e) => {
           e.stopPropagation();
           selectEl(el.id);
 
-          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          const isTouch = e.type === 'touchstart';
+          if (isTouch) e.preventDefault(); // Заборонємо скрол браузера під час дотику
 
-          let startX = clientX - (el.x * 50);
-          let startY = clientY - (el.y * 50);
+          const getCoords = (event) => {
+            return event.touches && event.touches.length > 0
+              ? { x: event.touches[0].clientX, y: event.touches[0].clientY }
+              : { x: event.clientX, y: event.clientY };
+          };
 
-          const moveDrag = (e) => {
-            const curX = e.touches ? e.touches[0].clientX : e.clientX;
-            const curY = e.touches ? e.touches[0].clientY : e.clientY;
+          const initial = getCoords(e);
+          let startX = initial.x - (el.x * 50);
+          let startY = initial.y - (el.y * 50);
 
-            let newX = Math.max(0, Math.round((curX - startX) / 25) * 0.5);
-            let newY = Math.max(0, Math.round((curY - startY) / 25) * 0.5);
+          const doDrag = (event) => {
+            if (event.cancelable) event.preventDefault();
+            const current = getCoords(event);
+
+            let newX = Math.max(0, Math.round((current.x - startX) / 25) * 0.5);
+            let newY = Math.max(0, Math.round((current.y - startY) / 25) * 0.5);
+            
             el.x = newX;
             el.y = newY;
             render();
@@ -213,20 +221,23 @@
           };
 
           const stopDrag = () => {
-            document.removeEventListener('mousemove', moveDrag);
+            document.removeEventListener('mousemove', doDrag);
             document.removeEventListener('mouseup', stopDrag);
-            document.removeEventListener('touchmove', moveDrag);
+            document.removeEventListener('touchmove', doDrag);
             document.removeEventListener('touchend', stopDrag);
           };
 
-          document.addEventListener('mousemove', moveDrag);
-          document.addEventListener('mouseup', stopDrag);
-          document.addEventListener('touchmove', moveDrag, { passive: false });
-          document.addEventListener('touchend', stopDrag);
+          if (isTouch) {
+            document.addEventListener('touchmove', doDrag, { passive: false });
+            document.addEventListener('touchend', stopDrag);
+          } else {
+            document.addEventListener('mousemove', doDrag);
+            document.addEventListener('mouseup', stopDrag);
+          }
         };
 
-        div.addEventListener('mousedown', startDrag);
-        div.addEventListener('touchstart', startDrag, { passive: false });
+        div.addEventListener('mousedown', initDrag);
+        div.addEventListener('touchstart', initDrag, { passive: false });
 
         canvas.appendChild(div);
       });
