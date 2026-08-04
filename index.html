@@ -42,8 +42,12 @@
 
     .gui-el.type-box { border-style: solid; }
     .gui-el.type-list_player, .gui-el.type-list_chest { background: rgba(0, 180, 216, 0.2); border: 2px solid #0fc5f7; display: flex; flex-direction: column; gap: 2px; justify-content: flex-start; padding: 4px; }
-    .slot-grid-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(18px, 1fr)); gap: 2px; width: 100%; height: 100%; pointer-events: none; }
+    .gui-el.type-item_btn, .gui-el.type-item_img { background: rgba(0,0,0,0.4); border: 2px solid #555; border-radius: 6px; flex-direction: column; }
+    
+    .slot-grid-preview { display: grid; gap: 2px; width: 100%; height: 100%; pointer-events: none; }
     .slot-cell { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.3); border-radius: 2px; }
+    
+    .item-id-tag { font-size: 9px; color: #0fc5f7; background: rgba(0,0,0,0.7); padding: 1px 3px; border-radius: 3px; font-family: monospace; }
 
     .prop-group { margin-bottom: 10px; }
     .prop-group label { display: block; font-size: 11px; color: #aaa; margin-bottom: 4px; }
@@ -192,13 +196,14 @@
         id, type, x: 0.5, y: 0.5, w: 2.5, h: 0.8, 
         text: "Текст", color: "#0fc5f7", item: "default:diamond", 
         key: "btn_" + id, options: "Опція 1,Опція 2",
-        nodePos: "17014 443 16012", listLocation: "main"
+        nodePos: "17014,443,16012"
       };
       
       if(type === 'title' || type === 'label') { newEl.w = 4; newEl.h = 0.8; newEl.text = "ЗАГОЛОВОК"; }
-      if(type === 'list_player') { newEl.w = 8; newEl.h = 4; newEl.x = 1; newEl.y = 3.5; }
-      if(type === 'list_chest') { newEl.w = 9; newEl.h = 3; newEl.x = 0.5; newEl.y = 0.5; }
-      if(type === 'item_btn') { newEl.w = 1.2; newEl.h = 1.2; newEl.text = "Купити"; }
+      if(type === 'list_player') { newEl.w = 8; newEl.h = 4; newEl.x = 0.25; newEl.y = 5.25; }
+      if(type === 'list_chest') { newEl.w = 9; newEl.h = 3; newEl.x = 0.25; newEl.y = 0.5; }
+      if(type === 'item_btn') { newEl.w = 1.2; newEl.h = 1.2; newEl.text = "Купити"; newEl.item = "default:diamond"; }
+      if(type === 'item_img') { newEl.w = 1.2; newEl.h = 1.2; newEl.item = "default:pick_mese"; }
       if(type === 'box') { newEl.w = 3; newEl.h = 1.5; newEl.color = "#111118"; }
 
       elements.push(newEl);
@@ -232,7 +237,7 @@
           }
           gridHtml += '</div>';
           
-          const labelText = el.type === 'list_player' ? '🎒 Твій інвентар' : `📦 Node: [${el.nodePos}]`;
+          const labelText = el.type === 'list_player' ? '🎒 Інвентар' : `📦 Node: [${el.nodePos}]`;
           div.innerHTML = `<span style="font-size:10px; position:absolute; top:-16px; left:0; color:#0fc5f7;">${labelText}</span>` + gridHtml;
         } else if (el.type === 'title') {
           div.style.color = el.color;
@@ -240,7 +245,11 @@
         } else if (el.type === 'box') {
           div.style.background = el.color;
         } else if (el.type === 'item_btn' || el.type === 'item_img') {
-          div.innerHTML = `<div>📦 ${el.item}</div>`;
+          div.innerHTML = `
+            <div style="font-size:14px;">📦</div>
+            <div class="item-id-tag">${el.item}</div>
+            ${el.type === 'item_btn' ? `<div style="font-size:10px; margin-top:2px;">${el.text}</div>` : ''}
+          `;
         } else {
           div.innerText = el.text;
         }
@@ -314,8 +323,18 @@
       if (el.type === 'list_chest') {
         html += `
           <div class="prop-group">
-            <label>Координати X Y Z (nodemeta):</label>
-            <input type="text" value="${el.nodePos}" placeholder="17014 443 16012" oninput="updateVal('nodePos', this.value)">
+            <label>Координати X,Y,Z (через кому):</label>
+            <input type="text" value="${el.nodePos}" placeholder="17014,443,16012" oninput="updateVal('nodePos', this.value)">
+          </div>
+        `;
+      }
+
+      // Поле вводу предмета для item_btn та item_img
+      if (el.type === 'item_btn' || el.type === 'item_img') {
+        html += `
+          <div class="prop-group">
+            <label>ID Предмета (напр. default:diamond):</label>
+            <input type="text" value="${el.item}" oninput="updateVal('item', this.value)">
           </div>
         `;
       }
@@ -344,7 +363,7 @@
       html += `
         <div style="display:flex; gap:6px;">
           <div class="prop-group" style="flex:1;">
-            <label>${el.type.startsWith('list') ? 'Слотів по ширині (W)' : 'Ширина W'}:</label>
+            <label>${el.type.startsWith('list') ? 'Слотів (W)' : 'Ширина W'}:</label>
             <input type="number" step="${el.type.startsWith('list') ? '1' : '0.1'}" value="${el.w}" onchange="updateVal('w', parseFloat(this.value))">
           </div>
           <div class="prop-group" style="flex:1;">
@@ -392,13 +411,13 @@
         code += `formspec_version[${currentVersion}]`;
       }
       
-      code += "size[10,8]background[-0.5,-0.5;11,9;gui_formbg.png;true]";
+      code += "size[12.5,12]background[0,0;12.5,12;default_item_bg.png]";
 
       elements.forEach(el => {
-        if (el.type === 'list_player') {
-          code += "list[current_player;main;" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";]";
-        } else if (el.type === 'list_chest') {
+        if (el.type === 'list_chest') {
           code += "list[nodemeta:" + el.nodePos + ";main;" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";]";
+        } else if (el.type === 'list_player') {
+          code += "list[current_player;main;" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";]";
         } else if (el.type === 'label') {
           code += "label[" + el.x + "," + el.y + ";" + el.text + "]";
         } else if (el.type === 'title') {
@@ -420,7 +439,7 @@
         }
       });
 
-      const fullCmd = '/giveme books:empty 1 0 "\\u0001owner\\u0002ДНазва\\u0003description\\u0002Інвентар\\u0003page\\u0001\\u0003page_max\\u0001\\u0003text_b64\\u00020LPRgNCw0L/QvtC9IDIgLSDRhNC20LXRgNCwINC/0L7Qu9GMINC70ZbQstC90LAK\\u0003title_b64\\u00020JrRgNC40YHQuyBCYWc=\\u0003formspec\\u0002' + code + '\\u0003"';
+      const fullCmd = '/giveme books:empty 1 0 "\\u0001owner\\u0002Деси\\u0003description\\u0002Інвентар\\u0003page\\u0001\\u0003page_max\\u0001\\u0003text_b64\\u00020LPRgNCw0L/QvtC9IDIgLSDRhNC20LXRgNCwINC/0L7Qu9GMINC70ZbQstC90LAK\\u0003title_b64\\u00020JrRgNC40YHQuyBCYWc=\\u0003formspec\\u0002' + code + '\\u0003"';
       document.getElementById('cmd-result').value = fullCmd;
     }
 
