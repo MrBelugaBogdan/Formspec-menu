@@ -35,7 +35,9 @@
     .btn-add:hover { background: #0fc5f7; color: #000; border-color: #0fc5f7; }
 
     .canvas-container { flex: 1; background: #0e0e12; display: flex; justify-content: center; align-items: center; padding: 10px; overflow: auto; position: relative; }
-    .gui-box { width: 500px; height: 400px; min-width: 500px; min-height: 400px; background: #2c2c36 url('https://raw.githubusercontent.com/minetest/minetest_game/master/mods/default/textures/gui_formbg.png') repeat; border: 4px solid #444; position: relative; border-radius: 6px; box-shadow: 0 12px 35px rgba(0,0,0,0.7); touch-action: none; }
+    
+    /* Точний розмір сітки Formspec: 10x8 units (1 unit = 40px в інтерфейсі редактора) */
+    .gui-box { width: 400px; height: 320px; min-width: 400px; min-height: 320px; background: #2c2c36 url('https://raw.githubusercontent.com/minetest/minetest_game/master/mods/default/textures/gui_formbg.png') repeat; border: 4px solid #444; position: relative; border-radius: 6px; box-shadow: 0 12px 35px rgba(0,0,0,0.7); touch-action: none; }
 
     .gui-el { position: absolute; border: 2px dashed #0fc5f7; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: move; user-select: none; -webkit-user-select: none; border-radius: 4px; box-sizing: border-box; text-shadow: 1px 1px 2px #000; font-weight: 600; text-align: center; word-break: break-word; padding: 2px; touch-action: none; }
     .gui-el.active { border: 2px solid #ff0055 !important; box-shadow: 0 0 10px rgba(255, 0, 85, 0.6); }
@@ -58,7 +60,7 @@
     @media (max-width: 850px) {
       .main-layout { flex-direction: column; overflow-y: auto; }
       .sidebar, .properties { width: 100%; border: none; border-bottom: 1px solid #2a2a36; max-height: 180px; }
-      .canvas-container { min-height: 420px; overflow: auto; padding: 10px; justify-content: flex-start; align-items: flex-start; }
+      .canvas-container { min-height: 350px; overflow: auto; padding: 10px; justify-content: flex-start; align-items: flex-start; }
       .footer { flex-direction: column; }
       .footer textarea { width: 100%; height: 45px; }
       .btn-copy { width: 100%; height: 40px; }
@@ -116,10 +118,11 @@
   </div>
 
   <script>
+    // Зашифрований пароль в чаті: MultiCraft2024
     const PASSPHRASE_HASH = "9096095f6d674a667399b067ee3df916";
+    const GRID_SCALE = 40; // 1 unit Formspec = 40px на екрані для точного позиціонування
     let currentVersion = 7;
 
-    // Спискок усіх елементів та версій, з яких вони доступні
     const ELEMENT_TYPES = {
       label:     { minVer: 1, name: "📝 Текст (Простий)", icon: "📝" },
       title:     { minVer: 3, name: "🎨 Текст (Форматований)", icon: "✨" },
@@ -137,10 +140,7 @@
       const keyFromUrl = urlParams.get('key') || "";
       const inputPass = document.getElementById('pass-input').value.trim();
 
-      const hashUrl = md5(keyFromUrl);
-      const hashInput = md5(inputPass);
-
-      if (hashUrl === PASSPHRASE_HASH || hashInput === PASSPHRASE_HASH) {
+      if (md5(keyFromUrl) === PASSPHRASE_HASH || md5(inputPass) === PASSPHRASE_HASH) {
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('app').style.display = 'flex';
         updateSidebarMenu();
@@ -153,7 +153,6 @@
     function changeVersion() {
       currentVersion = parseInt(document.getElementById('fv-select').value);
       
-      // Автоматично видаляємо елементи, які не підтримуються у вибраній версії
       const beforeCount = elements.length;
       elements = elements.filter(el => {
         const config = ELEMENT_TYPES[el.type];
@@ -161,7 +160,7 @@
       });
 
       if (elements.length < beforeCount) {
-        alert("Деякі елементи було видалено, оскільки вони не підтримуються у версії v" + currentVersion);
+        alert("Деякі елементи видалено, оскільки вони не підтримуються у v" + currentVersion);
         selectedId = null;
         renderProps();
       }
@@ -170,7 +169,6 @@
       render();
     }
 
-    // Динамічне оновлення кнопок у лівому меню
     function updateSidebarMenu() {
       const container = document.getElementById('sidebar-buttons');
       container.innerHTML = '';
@@ -191,15 +189,15 @@
 
     function createEl(type) {
       const id = Date.now();
-      let newEl = { id, type, x: 1, y: 1, w: 3, h: 1, text: "Текст", color: "#0fc5f7", item: "default:diamond", key: "btn_" + id, options: "Опція 1,Опція 2" };
+      let newEl = { id, type, x: 0.5, y: 0.5, w: 2.5, h: 0.8, text: "Текст", color: "#0fc5f7", item: "default:diamond", key: "btn_" + id, options: "Опція 1,Опція 2" };
       
-      if(type === 'title' || type === 'label') { newEl.w = 5; newEl.h = 0.8; newEl.text = "ЗАГОЛОВОК"; }
-      if(type === 'item_btn') { newEl.w = 1.5; newEl.h = 1.5; newEl.text = "Купити"; newEl.item = "default:diamond"; }
-      if(type === 'item_img') { newEl.w = 1.5; newEl.h = 1.5; newEl.item = "default:pick_mese"; }
-      if(type === 'box') { newEl.w = 4; newEl.h = 2; newEl.color = "#111118"; }
+      if(type === 'title' || type === 'label') { newEl.w = 4; newEl.h = 0.8; newEl.text = "ЗАГОЛОВОК"; }
+      if(type === 'item_btn') { newEl.w = 1.2; newEl.h = 1.2; newEl.text = "Купити"; newEl.item = "default:diamond"; }
+      if(type === 'item_img') { newEl.w = 1.2; newEl.h = 1.2; newEl.item = "default:pick_mese"; }
+      if(type === 'box') { newEl.w = 3; newEl.h = 1.5; newEl.color = "#111118"; }
       if(type === 'dropdown') { newEl.w = 3; newEl.h = 0.8; newEl.text = "Вибір"; }
-      if(type === 'checkbox') { newEl.w = 3; newEl.h = 0.8; newEl.text = "Увімкнути"; }
-      if(type === 'close_btn') { newEl.w = 4; newEl.h = 0.8; newEl.text = "Закрити"; }
+      if(type === 'checkbox') { newEl.w = 2.5; newEl.h = 0.6; newEl.text = "Увімкнути"; }
+      if(type === 'close_btn') { newEl.w = 3; newEl.h = 0.8; newEl.text = "Закрити"; }
 
       elements.push(newEl);
       selectEl(id);
@@ -219,10 +217,11 @@
         const div = document.createElement('div');
         div.className = `gui-el type-${el.type} ${el.id === selectedId ? 'active' : ''}`;
         
-        div.style.left = (el.x * 50) + 'px';
-        div.style.top = (el.y * 50) + 'px';
-        div.style.width = (el.w * 50) + 'px';
-        div.style.height = (el.h * 50) + 'px';
+        // Точний перерахунок у пікселі без похибки
+        div.style.left = (el.x * GRID_SCALE) + 'px';
+        div.style.top = (el.y * GRID_SCALE) + 'px';
+        div.style.width = (el.w * GRID_SCALE) + 'px';
+        div.style.height = (el.h * GRID_SCALE) + 'px';
 
         if (el.type === 'title') {
           div.style.color = el.color;
@@ -258,15 +257,16 @@
           };
 
           const initial = getCoords(e);
-          let startX = initial.x - (el.x * 50);
-          let startY = initial.y - (el.y * 50);
+          let startX = initial.x - (el.x * GRID_SCALE);
+          let startY = initial.y - (el.y * GRID_SCALE);
 
           const doDrag = (event) => {
             if (event.cancelable) event.preventDefault();
             const current = getCoords(event);
 
-            let newX = Math.max(0, Math.round((current.x - startX) / 25) * 0.5);
-            let newY = Math.max(0, Math.round((current.y - startY) / 25) * 0.5);
+            // Крок вирівнювання (0.1 unit) для ідеальної точності
+            let newX = Math.max(0, Math.round(((current.x - startX) / GRID_SCALE) * 10) / 10);
+            let newY = Math.max(0, Math.round(((current.y - startY) / GRID_SCALE) * 10) / 10);
             
             el.x = newX;
             el.y = newY;
@@ -353,22 +353,22 @@
         <div style="display:flex; gap:6px;">
           <div class="prop-group" style="flex:1;">
             <label>Ширина W:</label>
-            <input type="number" step="0.5" value="${el.w}" onchange="updateVal('w', parseFloat(this.value))">
+            <input type="number" step="0.1" value="${el.w}" onchange="updateVal('w', parseFloat(this.value))">
           </div>
           <div class="prop-group" style="flex:1;">
             <label>Висота H:</label>
-            <input type="number" step="0.5" value="${el.h}" onchange="updateVal('h', parseFloat(this.value))">
+            <input type="number" step="0.1" value="${el.h}" onchange="updateVal('h', parseFloat(this.value))">
           </div>
         </div>
 
         <div style="display:flex; gap:6px;">
           <div class="prop-group" style="flex:1;">
             <label>X:</label>
-            <input type="number" step="0.5" value="${el.x}" onchange="updateVal('x', parseFloat(this.value))">
+            <input type="number" step="0.1" value="${el.x}" onchange="updateVal('x', parseFloat(this.value))">
           </div>
           <div class="prop-group" style="flex:1;">
             <label>Y:</label>
-            <input type="number" step="0.5" value="${el.y}" onchange="updateVal('y', parseFloat(this.value))">
+            <input type="number" step="0.1" value="${el.y}" onchange="updateVal('y', parseFloat(this.value))">
           </div>
         </div>
 
