@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>MultiCraft Formspec Builder</title>
+  <!-- Бібліотека для надійного хешування MD5 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
     body { background: #121216; color: #fff; display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
@@ -116,22 +118,17 @@
   </div>
 
   <script>
-    // SHA-256 Хеш для ключа "пішов нахер" (Пароля в коді немає!)
-    const PASSPHRASE_HASH = "d1be6a2dd1fbf48a94627be9987dc9f289ebfdfc6183eec18beff14167571343";
-    async function hashString(str) {
-      const msgBuffer = new TextEncoder().encode(str);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
+    // Точний MD5 хеш для пароля "pepsicolaiteKILa"
+    const PASSPHRASE_HASH = "8f3cf8c7dfc924ea176bd74a161ef1c9";
 
-    async function checkAuth() {
+    function checkAuth() {
       const urlParams = new URLSearchParams(window.location.search);
       const keyFromUrl = urlParams.get('key') || "";
       const inputPass = document.getElementById('pass-input').value.trim();
 
-      const hashUrl = await hashString(keyFromUrl);
-      const hashInput = await hashString(inputPass);
+      // Хешування через MD5
+      const hashUrl = md5(keyFromUrl);
+      const hashInput = md5(inputPass);
 
       if (hashUrl === PASSPHRASE_HASH || hashInput === PASSPHRASE_HASH) {
         document.getElementById('auth-screen').style.display = 'none';
@@ -194,7 +191,6 @@
           div.innerText = el.text;
         }
 
-        // Універсальний Touch / Mouse Drag
         const startDrag = (e) => {
           e.stopPropagation();
           selectEl(el.id);
