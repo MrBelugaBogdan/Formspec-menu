@@ -35,17 +35,15 @@
     .btn-add:hover { background: #0fc5f7; color: #000; border-color: #0fc5f7; }
 
     .canvas-container { flex: 1; background: #0e0e12; display: flex; justify-content: center; align-items: center; padding: 10px; overflow: auto; position: relative; }
-    
-    /* Точний розмір сітки Formspec: 10x8 units (1 unit = 40px в інтерфейсі редактора) */
     .gui-box { width: 400px; height: 320px; min-width: 400px; min-height: 320px; background: #2c2c36 url('https://raw.githubusercontent.com/minetest/minetest_game/master/mods/default/textures/gui_formbg.png') repeat; border: 4px solid #444; position: relative; border-radius: 6px; box-shadow: 0 12px 35px rgba(0,0,0,0.7); touch-action: none; }
 
     .gui-el { position: absolute; border: 2px dashed #0fc5f7; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: move; user-select: none; -webkit-user-select: none; border-radius: 4px; box-sizing: border-box; text-shadow: 1px 1px 2px #000; font-weight: 600; text-align: center; word-break: break-word; padding: 2px; touch-action: none; }
     .gui-el.active { border: 2px solid #ff0055 !important; box-shadow: 0 0 10px rgba(255, 0, 85, 0.6); }
 
     .gui-el.type-box { border-style: solid; }
-    .gui-el.type-item_btn, .gui-el.type-item_img { background: rgba(0,0,0,0.4); border: 2px solid #555; border-radius: 6px; flex-direction: column; }
-    .gui-el .item-icon { font-size: 16px; }
-    .gui-el .item-id-tag { font-size: 9px; color: #0fc5f7; background: rgba(0,0,0,0.7); padding: 1px 3px; border-radius: 3px; font-family: monospace; }
+    .gui-el.type-list_player, .gui-el.type-list_chest { background: rgba(0, 180, 216, 0.2); border: 2px solid #0fc5f7; display: flex; flex-direction: column; gap: 2px; justify-content: flex-start; padding: 4px; }
+    .slot-grid-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(18px, 1fr)); gap: 2px; width: 100%; height: 100%; pointer-events: none; }
+    .slot-cell { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.3); border-radius: 2px; }
 
     .prop-group { margin-bottom: 10px; }
     .prop-group label { display: block; font-size: 11px; color: #aaa; margin-bottom: 4px; }
@@ -118,21 +116,22 @@
   </div>
 
   <script>
-    // Зашифрований пароль в чаті: MultiCraft2024
     const PASSPHRASE_HASH = "9096095f6d674a667399b067ee3df916";
-    const GRID_SCALE = 40; // 1 unit Formspec = 40px на екрані для точного позиціонування
+    const GRID_SCALE = 40;
     let currentVersion = 7;
 
     const ELEMENT_TYPES = {
-      label:     { minVer: 1, name: "📝 Текст (Простий)", icon: "📝" },
-      title:     { minVer: 3, name: "🎨 Текст (Форматований)", icon: "✨" },
-      item_btn:  { minVer: 1, name: "💎 Предмет-Кнопка", icon: "💎" },
-      item_img:  { minVer: 1, name: "🧱 Блок (Картинка)", icon: "🧱" },
-      box:       { minVer: 1, name: "🟦 Кольоровий Квадрат", icon: "🟦" },
-      field:     { minVer: 1, name: "📥 Поле вводу", icon: "📥" },
-      dropdown:  { minVer: 3, name: "📜 Випадаючий список", icon: "📜" },
-      checkbox:  { minVer: 1, name: "☑️ Чекбокс", icon: "☑️" },
-      close_btn: { minVer: 1, name: "❌ Кнопка 'Закрити'", icon: "❌" }
+      label:       { minVer: 1, name: "📝 Текст (Простий)" },
+      title:       { minVer: 3, name: "🎨 Текст (Форматований)" },
+      list_player: { minVer: 1, name: "🎒 Інвентар Гравця" },
+      list_chest:  { minVer: 1, name: "📦 Вміст Сундука (Node)" },
+      item_btn:    { minVer: 1, name: "💎 Предмет-Кнопка" },
+      item_img:    { minVer: 1, name: "🧱 Блок (Картинка)" },
+      box:         { minVer: 1, name: "🟦 Кольоровий Квадрат" },
+      field:       { minVer: 1, name: "📥 Поле вводу" },
+      dropdown:    { minVer: 3, name: "📜 Випадаючий список" },
+      checkbox:    { minVer: 1, name: "☑️ Чекбокс" },
+      close_btn:   { minVer: 1, name: "❌ Кнопка 'Закрити'" }
     };
 
     function checkAuth() {
@@ -189,15 +188,18 @@
 
     function createEl(type) {
       const id = Date.now();
-      let newEl = { id, type, x: 0.5, y: 0.5, w: 2.5, h: 0.8, text: "Текст", color: "#0fc5f7", item: "default:diamond", key: "btn_" + id, options: "Опція 1,Опція 2" };
+      let newEl = { 
+        id, type, x: 0.5, y: 0.5, w: 2.5, h: 0.8, 
+        text: "Текст", color: "#0fc5f7", item: "default:diamond", 
+        key: "btn_" + id, options: "Опція 1,Опція 2",
+        nodePos: "17014 443 16012", listLocation: "main"
+      };
       
       if(type === 'title' || type === 'label') { newEl.w = 4; newEl.h = 0.8; newEl.text = "ЗАГОЛОВОК"; }
-      if(type === 'item_btn') { newEl.w = 1.2; newEl.h = 1.2; newEl.text = "Купити"; newEl.item = "default:diamond"; }
-      if(type === 'item_img') { newEl.w = 1.2; newEl.h = 1.2; newEl.item = "default:pick_mese"; }
+      if(type === 'list_player') { newEl.w = 8; newEl.h = 4; newEl.x = 1; newEl.y = 3.5; }
+      if(type === 'list_chest') { newEl.w = 9; newEl.h = 3; newEl.x = 0.5; newEl.y = 0.5; }
+      if(type === 'item_btn') { newEl.w = 1.2; newEl.h = 1.2; newEl.text = "Купити"; }
       if(type === 'box') { newEl.w = 3; newEl.h = 1.5; newEl.color = "#111118"; }
-      if(type === 'dropdown') { newEl.w = 3; newEl.h = 0.8; newEl.text = "Вибір"; }
-      if(type === 'checkbox') { newEl.w = 2.5; newEl.h = 0.6; newEl.text = "Увімкнути"; }
-      if(type === 'close_btn') { newEl.w = 3; newEl.h = 0.8; newEl.text = "Закрити"; }
 
       elements.push(newEl);
       selectEl(id);
@@ -217,28 +219,28 @@
         const div = document.createElement('div');
         div.className = `gui-el type-${el.type} ${el.id === selectedId ? 'active' : ''}`;
         
-        // Точний перерахунок у пікселі без похибки
         div.style.left = (el.x * GRID_SCALE) + 'px';
         div.style.top = (el.y * GRID_SCALE) + 'px';
         div.style.width = (el.w * GRID_SCALE) + 'px';
         div.style.height = (el.h * GRID_SCALE) + 'px';
 
-        if (el.type === 'title') {
+        if (el.type === 'list_player' || el.type === 'list_chest') {
+          const slotsCount = Math.round(el.w) * Math.round(el.h);
+          let gridHtml = '<div class="slot-grid-preview" style="grid-template-columns: repeat(' + Math.round(el.w) + ', 1fr);">';
+          for(let i=0; i<slotsCount; i++) {
+            gridHtml += '<div class="slot-cell"></div>';
+          }
+          gridHtml += '</div>';
+          
+          const labelText = el.type === 'list_player' ? '🎒 Твій інвентар' : `📦 Node: [${el.nodePos}]`;
+          div.innerHTML = `<span style="font-size:10px; position:absolute; top:-16px; left:0; color:#0fc5f7;">${labelText}</span>` + gridHtml;
+        } else if (el.type === 'title') {
           div.style.color = el.color;
           div.innerText = el.text;
         } else if (el.type === 'box') {
           div.style.background = el.color;
-          div.innerText = "";
         } else if (el.type === 'item_btn' || el.type === 'item_img') {
-          div.innerHTML = `
-            <div class="item-icon">📦</div>
-            <div class="item-id-tag">${el.item}</div>
-            ${el.type === 'item_btn' ? `<div style="font-size:10px; margin-top:2px;">${el.text}</div>` : ''}
-          `;
-        } else if (el.type === 'dropdown') {
-          div.innerText = "🔽 " + el.text;
-        } else if (el.type === 'checkbox') {
-          div.innerText = "☑️ " + el.text;
+          div.innerHTML = `<div>📦 ${el.item}</div>`;
         } else {
           div.innerText = el.text;
         }
@@ -264,7 +266,6 @@
             if (event.cancelable) event.preventDefault();
             const current = getCoords(event);
 
-            // Крок вирівнювання (0.1 unit) для ідеальної точності
             let newX = Math.max(0, Math.round(((current.x - startX) / GRID_SCALE) * 10) / 10);
             let newY = Math.max(0, Math.round(((current.y - startY) / GRID_SCALE) * 10) / 10);
             
@@ -310,20 +311,20 @@
 
       let html = '';
 
+      if (el.type === 'list_chest') {
+        html += `
+          <div class="prop-group">
+            <label>Координати X Y Z (nodemeta):</label>
+            <input type="text" value="${el.nodePos}" placeholder="17014 443 16012" oninput="updateVal('nodePos', this.value)">
+          </div>
+        `;
+      }
+
       if (['title', 'label', 'field', 'item_btn', 'close_btn', 'dropdown', 'checkbox'].includes(el.type)) {
         html += `
           <div class="prop-group">
             <label>Текст / Назва:</label>
             <input type="text" value="${el.text}" oninput="updateVal('text', this.value)">
-          </div>
-        `;
-      }
-
-      if (el.type === 'dropdown') {
-        html += `
-          <div class="prop-group">
-            <label>Варіанти (через кому):</label>
-            <input type="text" value="${el.options}" oninput="updateVal('options', this.value)">
           </div>
         `;
       }
@@ -340,24 +341,15 @@
         `;
       }
 
-      if (el.type === 'item_btn' || el.type === 'item_img') {
-        html += `
-          <div class="prop-group">
-            <label>ID Предмета:</label>
-            <input type="text" value="${el.item}" oninput="updateVal('item', this.value)">
-          </div>
-        `;
-      }
-
       html += `
         <div style="display:flex; gap:6px;">
           <div class="prop-group" style="flex:1;">
-            <label>Ширина W:</label>
-            <input type="number" step="0.1" value="${el.w}" onchange="updateVal('w', parseFloat(this.value))">
+            <label>${el.type.startsWith('list') ? 'Слотів по ширині (W)' : 'Ширина W'}:</label>
+            <input type="number" step="${el.type.startsWith('list') ? '1' : '0.1'}" value="${el.w}" onchange="updateVal('w', parseFloat(this.value))">
           </div>
           <div class="prop-group" style="flex:1;">
-            <label>Висота H:</label>
-            <input type="number" step="0.1" value="${el.h}" onchange="updateVal('h', parseFloat(this.value))">
+            <label>${el.type.startsWith('list') ? 'Рядів (H)' : 'Висота H'}:</label>
+            <input type="number" step="${el.type.startsWith('list') ? '1' : '0.1'}" value="${el.h}" onchange="updateVal('h', parseFloat(this.value))">
           </div>
         </div>
 
@@ -403,7 +395,11 @@
       code += "size[10,8]background[-0.5,-0.5;11,9;gui_formbg.png;true]";
 
       elements.forEach(el => {
-        if (el.type === 'label') {
+        if (el.type === 'list_player') {
+          code += "list[current_player;main;" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";]";
+        } else if (el.type === 'list_chest') {
+          code += "list[nodemeta:" + el.nodePos + ";main;" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";]";
+        } else if (el.type === 'label') {
           code += "label[" + el.x + "," + el.y + ";" + el.text + "]";
         } else if (el.type === 'title') {
           code += "hypertext[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";title;<global halign=center font=size=20><style color=" + el.color + "><b>" + el.text + "</b></style>]";
@@ -424,7 +420,7 @@
         }
       });
 
-      const fullCmd = '/giveme books:empty 1 0 "\\u0001formspec\\u0002' + code + '\\u0003"';
+      const fullCmd = '/giveme books:empty 1 0 "\\u0001owner\\u0002ДНазва\\u0003description\\u0002Інвентар\\u0003page\\u0001\\u0003page_max\\u0001\\u0003text_b64\\u00020LPRgNCw0L/QvtC9IDIgLSDRhNC20LXRgNCwINC/0L7Qu9GMINC70ZbQstC90LAK\\u0003title_b64\\u00020JrRgNC40YHQuyBCYWc=\\u0003formspec\\u0002' + code + '\\u0003"';
       document.getElementById('cmd-result').value = fullCmd;
     }
 
