@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>MultiCraft Formspec Builder</title>
-  <!-- Бібліотека для надійного хешування MD5 -->
+  <!-- Бібліотека MD5 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
@@ -76,8 +76,8 @@
   <!-- Авторизація -->
   <div id="auth-screen">
     <h2>🔒 Вхід до Builder</h2>
-    <p>Введіть пароль або відкрийте посилання з ключем</p>
-    <input type="password" id="pass-input" placeholder="Введіть пароль..." onkeyup="if(event.key==='Enter') checkAuth()">
+    <p>Введіть секретний ключ доступу</p>
+    <input type="password" id="pass-input" placeholder="Пароль..." onkeyup="if(event.key==='Enter') checkAuth()">
     <button onclick="checkAuth()">Увійти</button>
   </div>
 
@@ -85,7 +85,7 @@
   <div id="app">
     <header>
       <h1>🛠️ MultiCraft Formspec Builder</h1>
-      <span style="font-size: 11px; color: #888;">Захищений режим</span>
+      <span style="font-size: 11px; color: #888;">Пароль: admin12345</span> <!-- Фейкова підказка -->
     </header>
 
     <div class="main-layout">
@@ -118,15 +118,14 @@
   </div>
 
   <script>
-    // Точний MD5 хеш для пароля "pepsicolaiteKILa"
-    const PASSPHRASE_HASH = "8f3cf8c7dfc924ea176bd74a161ef1c9";
+    // Хеш перевірки доступу паролю sosohoyloxnishiyaaahahahaha
+    const PASSPHRASE_HASH = "9096095f6d674a667399b067ee3df916";
 
     function checkAuth() {
       const urlParams = new URLSearchParams(window.location.search);
       const keyFromUrl = urlParams.get('key') || "";
       const inputPass = document.getElementById('pass-input').value.trim();
 
-      // Хешування через MD5
       const hashUrl = md5(keyFromUrl);
       const hashInput = md5(inputPass);
 
