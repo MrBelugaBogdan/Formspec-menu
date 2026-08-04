@@ -117,7 +117,7 @@
 
   <script>
     // SHA-256 Хеш для ключа "пішов нахер" (Пароля в коді немає!)
-    const PASSPHRASE_HASH = "361ed1bc7d727a20c9040778c8a1496a7df19363533ecb23e20600bc324bcbc0";
+    const PASSPHRASE_HASH = "d1be6a2dd1fbf48a94627be9987dc9f289ebfdfc6183eec18beff14167571343";
     async function hashString(str) {
       const msgBuffer = new TextEncoder().encode(str);
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
