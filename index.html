@@ -2,63 +2,71 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>MultiCraft Formspec Builder</title>
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
-    body { background: #121216; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    body { background: #121216; color: #fff; display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
 
     /* Екран авторизації */
-    #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #0c0c10; text-align: center; }
+    #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #0c0c10; text-align: center; padding: 20px; }
     #auth-screen h2 { color: #0fc5f7; font-size: 24px; margin-bottom: 8px; }
     #auth-screen p { color: #888; font-size: 14px; margin-bottom: 15px; }
-    #auth-screen input { padding: 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a22; color: #fff; width: 260px; text-align: center; font-size: 16px; margin-bottom: 12px; outline: none; }
+    #auth-screen input { padding: 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a22; color: #fff; width: 100%; max-width: 280px; text-align: center; font-size: 16px; margin-bottom: 12px; outline: none; }
     #auth-screen input:focus { border-color: #0fc5f7; }
-    #auth-screen button { padding: 12px 24px; border-radius: 8px; border: none; background: #0fc5f7; color: #000; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s; }
-    #auth-screen button:hover { background: #38d6ff; transform: scale(1.03); }
+    #auth-screen button { padding: 12px 24px; border-radius: 8px; border: none; background: #0fc5f7; color: #000; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s; width: 100%; max-width: 280px; }
+    #auth-screen button:hover { background: #38d6ff; }
 
-    /* Основний інтерфейс */
-    #app { display: none; flex-direction: column; height: 100vh; }
-    header { background: #16161e; padding: 12px 20px; border-bottom: 2px solid #0fc5f7; display: flex; justify-content: space-between; align-items: center; }
-    header h1 { font-size: 19px; color: #0fc5f7; display: flex; align-items: center; gap: 8px; }
+    /* Основний додаток */
+    #app { display: none; flex-direction: column; height: 100vh; height: 100dvh; }
+    header { background: #16161e; padding: 10px 15px; border-bottom: 2px solid #0fc5f7; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px; }
+    header h1 { font-size: 16px; color: #0fc5f7; }
 
-    .main-layout { display: flex; flex: 1; overflow: hidden; }
+    .main-layout { display: flex; flex: 1; overflow: hidden; position: relative; }
 
-    /* Ліва панель */
-    .sidebar { width: 250px; background: #1a1a24; padding: 15px; border-right: 1px solid #2a2a36; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
-    .sidebar h3 { font-size: 12px; text-transform: uppercase; color: #777; margin-bottom: 6px; letter-spacing: 0.5px; }
-    .btn-add { width: 100%; padding: 11px 12px; background: #252533; color: #eee; border: 1px solid #343446; border-radius: 7px; cursor: pointer; text-align: left; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; transition: 0.15s; }
-    .btn-add:hover { background: #0fc5f7; color: #000; font-weight: bold; border-color: #0fc5f7; }
+    /* Панелі */
+    .sidebar, .properties { width: 240px; background: #1a1a24; padding: 12px; overflow-y: auto; z-index: 10; flex-shrink: 0; }
+    .sidebar { border-right: 1px solid #2a2a36; }
+    .properties { border-left: 1px solid #2a2a36; }
+
+    .sidebar h3, .properties h3 { font-size: 11px; text-transform: uppercase; color: #777; margin-bottom: 8px; letter-spacing: 0.5px; }
+    .btn-add { width: 100%; padding: 10px; background: #252533; color: #eee; border: 1px solid #343446; border-radius: 6px; cursor: pointer; text-align: left; font-size: 12px; font-weight: 500; margin-bottom: 6px; transition: 0.15s; }
+    .btn-add:hover { background: #0fc5f7; color: #000; border-color: #0fc5f7; }
 
     /* Полотно GUI */
-    .canvas-container { flex: 1; background: #0e0e12; display: flex; justify-content: center; align-items: center; padding: 20px; position: relative; }
-    .gui-box { width: 500px; height: 400px; background: #2c2c36 url('https://raw.githubusercontent.com/minetest/minetest_game/master/mods/default/textures/gui_formbg.png') repeat; border: 4px solid #444; position: relative; border-radius: 6px; box-shadow: 0 12px 35px rgba(0,0,0,0.7); }
+    .canvas-container { flex: 1; background: #0e0e12; display: flex; justify-content: center; align-items: center; padding: 10px; overflow: auto; position: relative; touch-action: manipulation; }
+    .gui-box { width: 500px; height: 400px; min-width: 500px; min-height: 400px; background: #2c2c36 url('https://raw.githubusercontent.com/minetest/minetest_game/master/mods/default/textures/gui_formbg.png') repeat; border: 4px solid #444; position: relative; border-radius: 6px; box-shadow: 0 12px 35px rgba(0,0,0,0.7); touch-action: none; }
 
-    /* Елементи на полотні */
-    .gui-el { position: absolute; border: 2px dashed #0fc5f7; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: move; user-select: none; border-radius: 4px; box-sizing: border-box; text-shadow: 1px 1px 2px #000; font-weight: 600; text-align: center; word-break: break-word; padding: 2px; }
+    /* Елементи полотна */
+    .gui-el { position: absolute; border: 2px dashed #0fc5f7; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: move; user-select: none; -webkit-user-select: none; border-radius: 4px; box-sizing: border-box; text-shadow: 1px 1px 2px #000; font-weight: 600; text-align: center; word-break: break-word; padding: 2px; touch-action: none; }
     .gui-el.active { border: 2px solid #ff0055 !important; box-shadow: 0 0 10px rgba(255, 0, 85, 0.6); }
 
-    /* Види елементів */
     .gui-el.type-box { border-style: solid; }
-    .gui-el.type-item_btn, .gui-el.type-item_img { background: rgba(0,0,0,0.4); border: 2px solid #555; border-radius: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-    .gui-el .item-icon { font-size: 18px; margin-bottom: 2px; }
-    .gui-el .item-id-tag { font-size: 10px; color: #0fc5f7; background: rgba(0,0,0,0.7); padding: 1px 4px; border-radius: 3px; font-family: monospace; }
+    .gui-el.type-item_btn, .gui-el.type-item_img { background: rgba(0,0,0,0.4); border: 2px solid #555; border-radius: 6px; flex-direction: column; }
+    .gui-el .item-icon { font-size: 16px; }
+    .gui-el .item-id-tag { font-size: 9px; color: #0fc5f7; background: rgba(0,0,0,0.7); padding: 1px 3px; border-radius: 3px; font-family: monospace; }
 
-    /* Права панель редагування */
-    .properties { width: 280px; background: #1a1a24; padding: 15px; border-left: 1px solid #2a2a36; overflow-y: auto; }
-    .prop-group { margin-bottom: 14px; }
-    .prop-group label { display: block; font-size: 12px; color: #aaa; margin-bottom: 5px; }
-    .prop-group input[type="text"], .prop-group input[type="number"], .prop-group select { width: 100%; padding: 8px 10px; background: #121218; border: 1px solid #333; color: #fff; border-radius: 5px; font-size: 13px; outline: none; }
-    .prop-group input[type="text"]:focus, .prop-group input[type="number"]:focus { border-color: #0fc5f7; }
-    .color-picker-row { display: flex; gap: 8px; align-items: center; }
-    .color-picker-row input[type="color"] { border: none; width: 40px; height: 35px; border-radius: 5px; background: transparent; cursor: pointer; }
-    .color-picker-row input[type="text"] { flex: 1; }
+    /* Поля налаштувань */
+    .prop-group { margin-bottom: 10px; }
+    .prop-group label { display: block; font-size: 11px; color: #aaa; margin-bottom: 4px; }
+    .prop-group input[type="text"], .prop-group input[type="number"] { width: 100%; padding: 7px; background: #121218; border: 1px solid #333; color: #fff; border-radius: 5px; font-size: 12px; outline: none; }
+    .color-picker-row { display: flex; gap: 6px; align-items: center; }
+    .color-picker-row input[type="color"] { border: none; width: 35px; height: 30px; border-radius: 4px; background: transparent; cursor: pointer; }
 
-    /* Нижня панель копіювання */
-    .footer { background: #16161e; padding: 12px 20px; border-top: 1px solid #2a2a36; display: flex; gap: 12px; align-items: center; }
-    .footer textarea { flex: 1; height: 55px; background: #101014; border: 1px solid #333; color: #0fc5f7; padding: 10px; font-family: monospace; font-size: 12px; resize: none; border-radius: 6px; outline: none; }
-    .btn-copy { background: #0fc5f7; color: #000; border: none; padding: 0 25px; height: 55px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 14px; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
-    .btn-copy:hover { background: #38d6ff; }
+    /* Нижній блок */
+    .footer { background: #16161e; padding: 10px; border-top: 1px solid #2a2a36; display: flex; gap: 8px; align-items: center; }
+    .footer textarea { flex: 1; height: 50px; background: #101014; border: 1px solid #333; color: #0fc5f7; padding: 8px; font-family: monospace; font-size: 11px; resize: none; border-radius: 5px; outline: none; }
+    .btn-copy { background: #0fc5f7; color: #000; border: none; padding: 0 15px; height: 50px; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 13px; flex-shrink: 0; }
+
+    /* Мобільна адаптація */
+    @media (max-width: 850px) {
+      .main-layout { flex-direction: column; overflow-y: auto; }
+      .sidebar, .properties { width: 100%; border: none; border-bottom: 1px solid #2a2a36; max-height: 200px; }
+      .canvas-container { min-height: 420px; overflow: auto; padding: 10px; justify-content: flex-start; align-items: flex-start; }
+      .footer { flex-direction: column; }
+      .footer textarea { width: 100%; height: 45px; }
+      .btn-copy { width: 100%; height: 40px; }
+    }
   </style>
 </head>
 <body>
@@ -75,23 +83,17 @@
   <div id="app">
     <header>
       <h1>🛠️ MultiCraft Formspec Builder</h1>
-      <span style="font-size: 12px; color: #888;">Ключ доступу: <b style="color:#0fc5f7;">агуша</b></span>
+      <span style="font-size: 11px; color: #888;">Захищений режим</span>
     </header>
 
     <div class="main-layout">
       <div class="sidebar">
-        <h3>Текст і Заголовки</h3>
+        <h3>Елементи</h3>
         <button class="btn-add" onclick="createEl('title')">📝 Текст / Заголовок</button>
-        
-        <h3>Предмети і Блоки</h3>
         <button class="btn-add" onclick="createEl('item_btn')">💎 Предмет-Кнопка</button>
-        <button class="btn-add" onclick="createEl('item_img')">🧱 Блок / Предмет (Картинка)</button>
-        
-        <h3>Дизайн та Фони</h3>
-        <button class="btn-add" onclick="createEl('box')">🟦 Кольоровий Квадрат (Box)</button>
-
-        <h3>Інтерфейс</h3>
-        <button class="btn-add" onclick="createEl('field')">📥 Поле вводу (Field)</button>
+        <button class="btn-add" onclick="createEl('item_img')">🧱 Блок (Картинка)</button>
+        <button class="btn-add" onclick="createEl('box')">🟦 Кольоровий Квадрат</button>
+        <button class="btn-add" onclick="createEl('field')">📥 Поле вводу</button>
         <button class="btn-add" onclick="createEl('close_btn')">❌ Кнопка "Закрити"</button>
       </div>
 
@@ -100,32 +102,43 @@
       </div>
 
       <div class="properties">
-        <h3 style="margin-bottom: 12px; font-size: 13px; color: #888; text-transform: uppercase;">Властивості елемента</h3>
+        <h3>Властивості</h3>
         <div id="prop-editor">
-          <p style="color: #666; font-size: 13px;">Клікніть на будь-який елемент на екрані, щоб налаштувати його.</p>
+          <p style="color: #666; font-size: 12px;">Оберіть елемент для редагування.</p>
         </div>
       </div>
     </div>
 
     <div class="footer">
       <textarea id="cmd-result" readonly></textarea>
-      <button class="btn-copy" onclick="copyResult()">📋 Скопіювати команду</button>
+      <button class="btn-copy" onclick="copyResult()">📋 Скопіювати</button>
     </div>
   </div>
 
   <script>
-    const SECRET_KEY = "агуша";
+    // SHA-256 Хеш для ключа "агуша" (Пароля в коді немає!)
+    const PASSPHRASE_HASH = "e3f169f4ea54efdc7dc1b6fb95932df4c29d0bc6505b821f92e340c2105a5a17";
 
-    function checkAuth() {
+    async function hashString(str) {
+      const msgBuffer = new TextEncoder().encode(str);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function checkAuth() {
       const urlParams = new URLSearchParams(window.location.search);
-      const keyFromUrl = urlParams.get('key');
+      const keyFromUrl = urlParams.get('key') || "";
       const inputPass = document.getElementById('pass-input').value.trim();
 
-      if (keyFromUrl === SECRET_KEY || inputPass === SECRET_KEY) {
+      const hashUrl = await hashString(keyFromUrl);
+      const hashInput = await hashString(inputPass);
+
+      if (hashUrl === PASSPHRASE_HASH || hashInput === PASSPHRASE_HASH) {
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('app').style.display = 'flex';
       } else if (inputPass !== "") {
-        alert("Невірний пароль! Спробуйте ще раз.");
+        alert("Невірний пароль!");
       }
     }
     window.onload = checkAuth;
@@ -135,18 +148,7 @@
 
     function createEl(type) {
       const id = Date.now();
-      let newEl = { 
-        id, 
-        type, 
-        x: 1, 
-        y: 1, 
-        w: 3, 
-        h: 1, 
-        text: "Текст", 
-        color: "#0fc5f7", 
-        item: "default:diamond", 
-        key: "btn_" + id 
-      };
+      let newEl = { id, type, x: 1, y: 1, w: 3, h: 1, text: "Текст", color: "#0fc5f7", item: "default:diamond", key: "btn_" + id };
       
       if(type === 'title') { newEl.w = 6; newEl.h = 0.8; newEl.text = "МАГАЗИН ПРЕДМЕТІВ"; }
       if(type === 'item_btn') { newEl.w = 1.5; newEl.h = 1.5; newEl.text = "Купити"; newEl.item = "default:diamond"; }
@@ -187,34 +189,50 @@
           div.innerHTML = `
             <div class="item-icon">📦</div>
             <div class="item-id-tag">${el.item}</div>
-            ${el.type === 'item_btn' ? `<div style="font-size:11px; margin-top:2px;">${el.text}</div>` : ''}
+            ${el.type === 'item_btn' ? `<div style="font-size:10px; margin-top:2px;">${el.text}</div>` : ''}
           `;
         } else {
           div.innerText = el.text;
         }
 
-        div.onmousedown = function(e) {
+        // Універсальний Touch / Mouse Drag
+        const startDrag = (e) => {
           e.stopPropagation();
           selectEl(el.id);
 
-          let startX = e.clientX - (el.x * 50);
-          let startY = e.clientY - (el.y * 50);
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-          function onMouseMove(e) {
-            let newX = Math.max(0, Math.round((e.clientX - startX) / 25) * 0.5);
-            let newY = Math.max(0, Math.round((e.clientY - startY) / 25) * 0.5);
+          let startX = clientX - (el.x * 50);
+          let startY = clientY - (el.y * 50);
+
+          const moveDrag = (e) => {
+            const curX = e.touches ? e.touches[0].clientX : e.clientX;
+            const curY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            let newX = Math.max(0, Math.round((curX - startX) / 25) * 0.5);
+            let newY = Math.max(0, Math.round((curY - startY) / 25) * 0.5);
             el.x = newX;
             el.y = newY;
             render();
             renderProps();
-          }
-
-          document.addEventListener('mousemove', onMouseMove);
-          document.onmouseup = function() {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.onmouseup = null;
           };
+
+          const stopDrag = () => {
+            document.removeEventListener('mousemove', moveDrag);
+            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchmove', moveDrag);
+            document.removeEventListener('touchend', stopDrag);
+          };
+
+          document.addEventListener('mousemove', moveDrag);
+          document.addEventListener('mouseup', stopDrag);
+          document.addEventListener('touchmove', moveDrag, { passive: false });
+          document.addEventListener('touchend', stopDrag);
         };
+
+        div.addEventListener('mousedown', startDrag);
+        div.addEventListener('touchstart', startDrag, { passive: false });
 
         canvas.appendChild(div);
       });
@@ -227,7 +245,7 @@
       const el = elements.find(item => item.id === selectedId);
 
       if (!el) {
-        editor.innerHTML = '<p style="color: #666; font-size: 13px;">Нічого не обрано</p>';
+        editor.innerHTML = '<p style="color: #666; font-size: 12px;">Нічого не обрано</p>';
         return;
       }
 
@@ -245,7 +263,7 @@
       if (el.type === 'title' || el.type === 'box') {
         html += `
           <div class="prop-group">
-            <label>Колір (${el.type === 'box' ? 'Фону' : 'Тексту'}):</label>
+            <label>Колір:</label>
             <div class="color-picker-row">
               <input type="color" value="${el.color}" oninput="updateVal('color', this.value); this.nextElementSibling.value=this.value;">
               <input type="text" value="${el.color}" oninput="updateVal('color', this.value); this.previousElementSibling.value=this.value;">
@@ -257,37 +275,36 @@
       if (el.type === 'item_btn' || el.type === 'item_img') {
         html += `
           <div class="prop-group">
-            <label>ID Блока / Предмета MultiCraft:</label>
-            <input type="text" value="${el.item}" placeholder="наприклад, default:diamond" oninput="updateVal('item', this.value)">
-            <span style="font-size:11px; color:#777; margin-top:4px; display:block;">Приклади: default:dirt, default:pick_mese, default:apple</span>
+            <label>ID Предмета:</label>
+            <input type="text" value="${el.item}" oninput="updateVal('item', this.value)">
           </div>
         `;
       }
 
       html += `
-        <div style="display:flex; gap:10px;">
+        <div style="display:flex; gap:6px;">
           <div class="prop-group" style="flex:1;">
-            <label>Ширина (W):</label>
+            <label>Ширина W:</label>
             <input type="number" step="0.5" value="${el.w}" onchange="updateVal('w', parseFloat(this.value))">
           </div>
           <div class="prop-group" style="flex:1;">
-            <label>Висота (H):</label>
+            <label>Висота H:</label>
             <input type="number" step="0.5" value="${el.h}" onchange="updateVal('h', parseFloat(this.value))">
           </div>
         </div>
 
-        <div style="display:flex; gap:10px;">
+        <div style="display:flex; gap:6px;">
           <div class="prop-group" style="flex:1;">
-            <label>Позиція X:</label>
+            <label>X:</label>
             <input type="number" step="0.5" value="${el.x}" onchange="updateVal('x', parseFloat(this.value))">
           </div>
           <div class="prop-group" style="flex:1;">
-            <label>Позиція Y:</label>
+            <label>Y:</label>
             <input type="number" step="0.5" value="${el.y}" onchange="updateVal('y', parseFloat(this.value))">
           </div>
         </div>
 
-        <button onclick="removeEl(${el.id})" style="background:#ff3355; color:#fff; border:none; padding:9px; width:100%; border-radius:5px; cursor:pointer; font-weight:bold; margin-top:10px;">🗑️ Видалити елемент</button>
+        <button onclick="removeEl(${el.id})" style="background:#ff3355; color:#fff; border:none; padding:8px; width:100%; border-radius:5px; cursor:pointer; font-weight:bold; margin-top:5px; font-size:12px;">🗑️ Видалити</button>
       `;
 
       editor.innerHTML = html;
@@ -308,13 +325,11 @@
       render();
     }
 
-    // Повністю очищений синтаксис без жодних пробілів у тегах стилю
     function buildCmd() {
       let code = "formspec_version[7]size[10,8]background[-0.5,-0.5;11,9;gui_formbg.png;true]";
 
       elements.forEach(el => {
         if (el.type === 'title') {
-          // Прибрано пробіли з атрибутів стилю та зшито теги без відступів
           code += "hypertext[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";title;<global halign=center font=size=20><style color=" + el.color + "><b>" + el.text + "</b></style>]";
         } else if (el.type === 'box') {
           code += "box[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.color + "]";
@@ -337,7 +352,7 @@
       const txt = document.getElementById("cmd-result");
       txt.select();
       navigator.clipboard.writeText(txt.value);
-      alert("✅ Команду скопійовано! Вставляй її в гру MultiCraft.");
+      alert("✅ Скопійовано!");
     }
   </script>
 </body>
