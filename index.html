@@ -94,14 +94,7 @@
     <div class="main-layout">
       <div class="sidebar">
         <h3>Елементи</h3>
-        <button class="btn-add" onclick="createEl('title')">📝 Текст / Заголовок</button>
-        <button class="btn-add" onclick="createEl('item_btn')">💎 Предмет-Кнопка</button>
-        <button class="btn-add" onclick="createEl('item_img')">🧱 Блок (Картинка)</button>
-        <button class="btn-add" onclick="createEl('box')">🟦 Кольоровий Квадрат</button>
-        <button class="btn-add" onclick="createEl('field')">📥 Поле вводу</button>
-        <button class="btn-add" onclick="createEl('dropdown')">📜 Випадаючий список</button>
-        <button class="btn-add" onclick="createEl('checkbox')">☑️ Чекбокс</button>
-        <button class="btn-add" onclick="createEl('close_btn')">❌ Кнопка "Закрити"</button>
+        <div id="sidebar-buttons"></div>
       </div>
 
       <div class="canvas-container">
@@ -126,6 +119,19 @@
     const PASSPHRASE_HASH = "9096095f6d674a667399b067ee3df916";
     let currentVersion = 7;
 
+    // Спискок усіх елементів та версій, з яких вони доступні
+    const ELEMENT_TYPES = {
+      label:     { minVer: 1, name: "📝 Текст (Простий)", icon: "📝" },
+      title:     { minVer: 3, name: "🎨 Текст (Форматований)", icon: "✨" },
+      item_btn:  { minVer: 1, name: "💎 Предмет-Кнопка", icon: "💎" },
+      item_img:  { minVer: 1, name: "🧱 Блок (Картинка)", icon: "🧱" },
+      box:       { minVer: 1, name: "🟦 Кольоровий Квадрат", icon: "🟦" },
+      field:     { minVer: 1, name: "📥 Поле вводу", icon: "📥" },
+      dropdown:  { minVer: 3, name: "📜 Випадаючий список", icon: "📜" },
+      checkbox:  { minVer: 1, name: "☑️ Чекбокс", icon: "☑️" },
+      close_btn: { minVer: 1, name: "❌ Кнопка 'Закрити'", icon: "❌" }
+    };
+
     function checkAuth() {
       const urlParams = new URLSearchParams(window.location.search);
       const keyFromUrl = urlParams.get('key') || "";
@@ -137,6 +143,7 @@
       if (hashUrl === PASSPHRASE_HASH || hashInput === PASSPHRASE_HASH) {
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('app').style.display = 'flex';
+        updateSidebarMenu();
       } else if (inputPass !== "") {
         alert("Невірний пароль!");
       }
@@ -145,7 +152,38 @@
 
     function changeVersion() {
       currentVersion = parseInt(document.getElementById('fv-select').value);
-      buildCmd();
+      
+      // Автоматично видаляємо елементи, які не підтримуються у вибраній версії
+      const beforeCount = elements.length;
+      elements = elements.filter(el => {
+        const config = ELEMENT_TYPES[el.type];
+        return config && currentVersion >= config.minVer;
+      });
+
+      if (elements.length < beforeCount) {
+        alert("Деякі елементи було видалено, оскільки вони не підтримуються у версії v" + currentVersion);
+        selectedId = null;
+        renderProps();
+      }
+
+      updateSidebarMenu();
+      render();
+    }
+
+    // Динамічне оновлення кнопок у лівому меню
+    function updateSidebarMenu() {
+      const container = document.getElementById('sidebar-buttons');
+      container.innerHTML = '';
+
+      for (const [key, item] of Object.entries(ELEMENT_TYPES)) {
+        if (currentVersion >= item.minVer) {
+          const btn = document.createElement('button');
+          btn.className = 'btn-add';
+          btn.innerText = item.name;
+          btn.onclick = () => createEl(key);
+          container.appendChild(btn);
+        }
+      }
     }
 
     let elements = [];
@@ -153,9 +191,9 @@
 
     function createEl(type) {
       const id = Date.now();
-      let newEl = { id, type, x: 1, y: 1, w: 3, h: 1, text: "Текст", color: "#0fc5f7", item: "default:diamond", key: "btn_" + id, options: "Опція 1,Опція 2", checked: "false" };
+      let newEl = { id, type, x: 1, y: 1, w: 3, h: 1, text: "Текст", color: "#0fc5f7", item: "default:diamond", key: "btn_" + id, options: "Опція 1,Опція 2" };
       
-      if(type === 'title') { newEl.w = 6; newEl.h = 0.8; newEl.text = "МАГАЗИН ПРЕДМЕТІВ"; }
+      if(type === 'title' || type === 'label') { newEl.w = 5; newEl.h = 0.8; newEl.text = "ЗАГОЛОВОК"; }
       if(type === 'item_btn') { newEl.w = 1.5; newEl.h = 1.5; newEl.text = "Купити"; newEl.item = "default:diamond"; }
       if(type === 'item_img') { newEl.w = 1.5; newEl.h = 1.5; newEl.item = "default:pick_mese"; }
       if(type === 'box') { newEl.w = 4; newEl.h = 2; newEl.color = "#111118"; }
@@ -272,7 +310,7 @@
 
       let html = '';
 
-      if (['title', 'field', 'item_btn', 'close_btn', 'dropdown', 'checkbox'].includes(el.type)) {
+      if (['title', 'label', 'field', 'item_btn', 'close_btn', 'dropdown', 'checkbox'].includes(el.type)) {
         html += `
           <div class="prop-group">
             <label>Текст / Назва:</label>
@@ -365,13 +403,10 @@
       code += "size[10,8]background[-0.5,-0.5;11,9;gui_formbg.png;true]";
 
       elements.forEach(el => {
-        if (el.type === 'title') {
-          // Hypertext підтримується від v3 і вище, для старих версій генеруємо label
-          if (currentVersion >= 3) {
-            code += "hypertext[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";title;<global halign=center font=size=20><style color=" + el.color + "><b>" + el.text + "</b></style>]";
-          } else {
-            code += "label[" + el.x + "," + el.y + ";" + el.text + "]";
-          }
+        if (el.type === 'label') {
+          code += "label[" + el.x + "," + el.y + ";" + el.text + "]";
+        } else if (el.type === 'title') {
+          code += "hypertext[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";title;<global halign=center font=size=20><style color=" + el.color + "><b>" + el.text + "</b></style>]";
         } else if (el.type === 'box') {
           code += "box[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.color + "]";
         } else if (el.type === 'item_btn') {
