@@ -55,6 +55,13 @@ function updateSidebarMenu() {
   const container = document.getElementById('sidebar-buttons');
   container.innerHTML = '';
 
+  // Кнопка швидкого створення фону
+  const bgBtn = document.createElement('button');
+  bgBtn.className = 'btn-bg';
+  bgBtn.innerText = '🌅 Зробити Фон на всю сітку';
+  bgBtn.onclick = createBackground;
+  container.appendChild(bgBtn);
+
   for (const [key, item] of Object.entries(ELEMENT_TYPES)) {
     if (currentVersion >= item.minVer) {
       const btn = document.createElement('button');
@@ -64,6 +71,24 @@ function updateSidebarMenu() {
       container.appendChild(btn);
     }
   }
+}
+
+// 🌅 Створення фону (автоматично ставиться в найнижчий шар — на задній план)
+function createBackground() {
+  const id = Date.now();
+  const bgEl = {
+    id,
+    type: 'box',
+    x: 0,
+    y: 0,
+    w: 12.5,
+    h: 12,
+    color: "#181824"
+  };
+  
+  // Додаємо фон на самий початок масиву (щоб він рендерився першим на задньому плані)
+  elements.unshift(bgEl);
+  selectEl(id);
 }
 
 function createEl(type) {
@@ -84,6 +109,30 @@ function createEl(type) {
 
   elements.push(newEl);
   selectEl(id);
+}
+
+// 🔝 Перемістити шар ВГОРУ (на передній план)
+function moveLayerUp() {
+  const idx = elements.findIndex(el => el.id === selectedId);
+  if (idx !== -1 && idx < elements.length - 1) {
+    const temp = elements[idx];
+    elements[idx] = elements[idx + 1];
+    elements[idx + 1] = temp;
+    render();
+    renderProps();
+  }
+}
+
+// 🔻 Перемістити шар ВНИЗ (на задній план)
+function moveLayerDown() {
+  const idx = elements.findIndex(el => el.id === selectedId);
+  if (idx > 0) {
+    const temp = elements[idx];
+    elements[idx] = elements[idx - 1];
+    elements[idx - 1] = temp;
+    render();
+    renderProps();
+  }
 }
 
 function selectEl(id) {
@@ -200,7 +249,15 @@ function renderProps() {
     return;
   }
 
-  let html = '';
+  let html = `
+    <div style="margin-bottom: 12px;">
+      <label style="font-size: 11px; color: #aaa;">Порядок шару:</label>
+      <div class="layer-controls">
+        <button class="btn-layer" onclick="moveLayerUp()">⬆️ На передній план</button>
+        <button class="btn-layer" onclick="moveLayerDown()">⬇️ На задній план</button>
+      </div>
+    </div>
+  `;
 
   if (el.type === 'list_chest') {
     html += `
