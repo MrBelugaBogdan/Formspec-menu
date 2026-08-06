@@ -35,14 +35,16 @@
     .btn-add { width: 100%; padding: 10px; background: #252533; color: #eee; border: 1px solid #343446; border-radius: 6px; cursor: pointer; text-align: left; font-size: 12px; font-weight: 500; margin-bottom: 6px; transition: 0.15s; }
     .btn-add:hover { background: #0fc5f7; color: #000; border-color: #0fc5f7; }
 
-    .canvas-container { flex: 1; background: #0e0e12; display: flex; justify-content: center; align-items: center; padding: 10px; overflow: auto; position: relative; }
-    .gui-box { width: 400px; height: 320px; min-width: 400px; min-height: 320px; background: #2c2c36 url('https://raw.githubusercontent.com/minetest/minetest_game/master/mods/default/textures/gui_formbg.png') repeat; border: 4px solid #444; position: relative; border-radius: 6px; box-shadow: 0 12px 35px rgba(0,0,0,0.7); touch-action: none; }
+    .canvas-container { flex: 1; background: #0e0e12; display: flex; justify-content: center; align-items: center; padding: 15px; overflow: auto; position: relative; }
+    
+    /* Точно налаштоване полотно з пропорціями під size[12.5, 12] */
+    .gui-box { width: 500px; height: 480px; min-width: 500px; min-height: 480px; background: #2c2c36 url('https://raw.githubusercontent.com/minetest/minetest_game/master/mods/default/textures/gui_formbg.png') repeat; border: 4px solid #444; position: relative; border-radius: 6px; box-shadow: 0 12px 35px rgba(0,0,0,0.7); touch-action: none; }
 
     .gui-el { position: absolute; border: 2px dashed #0fc5f7; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: move; user-select: none; -webkit-user-select: none; border-radius: 4px; box-sizing: border-box; text-shadow: 1px 1px 2px #000; font-weight: 600; text-align: center; word-break: break-word; padding: 2px; touch-action: none; }
     .gui-el.active { border: 2px solid #ff0055 !important; box-shadow: 0 0 10px rgba(255, 0, 85, 0.6); }
 
     .gui-el.type-box { border-style: solid; }
-    .gui-el.type-list_player, .gui-el.type-list_chest { background: rgba(0, 180, 216, 0.2); border: 2px solid #0fc5f7; display: flex; flex-direction: column; gap: 2px; justify-content: flex-start; padding: 4px; }
+    .gui-el.type-list_player, .gui-el.type-list_chest { background: rgba(0, 180, 216, 0.25); border: 2px solid #0fc5f7; display: flex; flex-direction: column; gap: 2px; justify-content: flex-start; padding: 2px; }
     .gui-el.type-item_btn, .gui-el.type-item_img { background: rgba(0,0,0,0.4); border: 2px solid #555; border-radius: 6px; flex-direction: column; }
     
     .slot-grid-preview { display: grid; gap: 2px; width: 100%; height: 100%; pointer-events: none; }
@@ -122,7 +124,9 @@
 
   <script>
     const PASSPHRASE_HASH = "9096095f6d674a667399b067ee3df916";
-    const GRID_SCALE = 40;
+    
+    // 1 Unit у Formspec = 40px на екрані
+    const GRID_SCALE = 40; 
     let currentVersion = 7;
 
     const ELEMENT_TYPES = {
@@ -225,21 +229,25 @@
         const div = document.createElement('div');
         div.className = `gui-el type-${el.type} ${el.id === selectedId ? 'active' : ''}`;
         
+        // Масштабування координат точно під графіку Minetest
         div.style.left = (el.x * GRID_SCALE) + 'px';
         div.style.top = (el.y * GRID_SCALE) + 'px';
         div.style.width = (el.w * GRID_SCALE) + 'px';
         div.style.height = (el.h * GRID_SCALE) + 'px';
 
         if (el.type === 'list_player' || el.type === 'list_chest') {
-          const slotsCount = Math.round(el.w) * Math.round(el.h);
-          let gridHtml = '<div class="slot-grid-preview" style="grid-template-columns: repeat(' + Math.round(el.w) + ', 1fr);">';
-          for(let i=0; i<slotsCount; i++) {
+          const slotsW = Math.max(1, Math.round(el.w));
+          const slotsH = Math.max(1, Math.round(el.h));
+          const totalSlots = slotsW * slotsH;
+          
+          let gridHtml = `<div class="slot-grid-preview" style="grid-template-columns: repeat(${slotsW}, 1fr);">`;
+          for(let i=0; i<totalSlots; i++) {
             gridHtml += '<div class="slot-cell"></div>';
           }
           gridHtml += '</div>';
           
           const labelText = el.type === 'list_player' ? '🎒 Інвентар' : `📦 Node: [${el.nodePos}]`;
-          div.innerHTML = `<span style="font-size:10px; position:absolute; top:-16px; left:0; color:#0fc5f7;">${labelText}</span>` + gridHtml;
+          div.innerHTML = `<span style="font-size:9px; position:absolute; top:-15px; left:0; color:#0fc5f7; white-space:nowrap;">${labelText}</span>` + gridHtml;
         } else if (el.type === 'title') {
           div.style.color = el.color;
           div.innerText = el.text;
@@ -276,8 +284,12 @@
             if (event.cancelable) event.preventDefault();
             const current = getCoords(event);
 
-            let newX = Math.max(0, Math.round(((current.x - startX) / GRID_SCALE) * 10) / 10);
-            let newY = Math.max(0, Math.round(((current.y - startY) / GRID_SCALE) * 10) / 10);
+            // Крок позиціонування 0.05 для суперточного суміщення!
+            let rawX = (current.x - startX) / GRID_SCALE;
+            let rawY = (current.y - startY) / GRID_SCALE;
+
+            let newX = Math.max(0, Math.round(rawX * 20) / 20);
+            let newY = Math.max(0, Math.round(rawY * 20) / 20);
             
             el.x = newX;
             el.y = newY;
@@ -330,7 +342,6 @@
         `;
       }
 
-      // Поле вводу предмета для item_btn та item_img
       if (el.type === 'item_btn' || el.type === 'item_img') {
         html += `
           <div class="prop-group">
@@ -365,22 +376,22 @@
         <div style="display:flex; gap:6px;">
           <div class="prop-group" style="flex:1;">
             <label>${el.type.startsWith('list') ? 'Слотів (W)' : 'Ширина W'}:</label>
-            <input type="number" step="${el.type.startsWith('list') ? '1' : '0.1'}" value="${el.w}" onchange="updateVal('w', parseFloat(this.value))">
+            <input type="number" step="${el.type.startsWith('list') ? '1' : '0.05'}" value="${el.w}" onchange="updateVal('w', parseFloat(this.value))">
           </div>
           <div class="prop-group" style="flex:1;">
             <label>${el.type.startsWith('list') ? 'Рядів (H)' : 'Висота H'}:</label>
-            <input type="number" step="${el.type.startsWith('list') ? '1' : '0.1'}" value="${el.h}" onchange="updateVal('h', parseFloat(this.value))">
+            <input type="number" step="${el.type.startsWith('list') ? '1' : '0.05'}" value="${el.h}" onchange="updateVal('h', parseFloat(this.value))">
           </div>
         </div>
 
         <div style="display:flex; gap:6px;">
           <div class="prop-group" style="flex:1;">
             <label>X:</label>
-            <input type="number" step="0.1" value="${el.x}" onchange="updateVal('x', parseFloat(this.value))">
+            <input type="number" step="0.05" value="${el.x}" onchange="updateVal('x', parseFloat(this.value))">
           </div>
           <div class="prop-group" style="flex:1;">
             <label>Y:</label>
-            <input type="number" step="0.1" value="${el.y}" onchange="updateVal('y', parseFloat(this.value))">
+            <input type="number" step="0.05" value="${el.y}" onchange="updateVal('y', parseFloat(this.value))">
           </div>
         </div>
 
