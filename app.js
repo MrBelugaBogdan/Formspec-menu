@@ -2,7 +2,7 @@ let currentVersion = 7;
 let elements = [];
 let selectedId = null;
 
-const GRID_SCALE = 32; // Масштаб пікселів на 1 одиницю Formspec
+const GRID_SCALE = 32;
 
 const ELEMENT_TYPES = {
   label:       { minVer: 1, name: "📝 Текст (Простий)" },
@@ -19,29 +19,24 @@ const ELEMENT_TYPES = {
   close_btn:   { minVer: 1, name: "❌ Кнопка 'Закрити'" }
 };
 
-// 🔒 Перевірка авторизації
 function checkAuth() {
   const urlParams = new URLSearchParams(window.location.search);
   const keyFromUrl = urlParams.get('key') || "";
   const inputPass = document.getElementById('pass-input').value.trim();
 
-  if (typeof PASSPHRASE_HASH !== 'undefined' && (md5(keyFromUrl) === PASSPHRASE_HASH || md5(inputPass) === PASSPHRASE_HASH)) {
+  const targetHash = (typeof PASSPHRASE_HASH !== 'undefined') ? PASSPHRASE_HASH : "";
+
+  if (!targetHash || md5(keyFromUrl) === targetHash || md5(inputPass) === targetHash) {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     updateSidebarMenu();
   } else if (inputPass !== "") {
     alert("Невірний пароль!");
-  } else {
-    // Автоматичний вхід, якщо хеш не прописано
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    updateSidebarMenu();
   }
 }
 
 window.onload = checkAuth;
 
-// 🔄 Зміна версії Formspec
 function changeVersion() {
   currentVersion = parseInt(document.getElementById('fv-select').value);
   
@@ -61,7 +56,6 @@ function changeVersion() {
   render();
 }
 
-// 🔘 Оновлення кнопок лівої панелі
 function updateSidebarMenu() {
   const container = document.getElementById('sidebar-buttons');
   if (!container) return;
@@ -84,13 +78,12 @@ function updateSidebarMenu() {
   }
 }
 
-// 🌅 Створення фону
 function createBackground() {
   const id = Date.now();
   const bgEl = {
     id,
     type: 'bg_custom',
-    bgMode: 'color', // 'color', 'texture', або 'item'
+    bgMode: 'color',
     x: 0,
     y: 0,
     w: 16,
@@ -100,11 +93,10 @@ function createBackground() {
     item: "default:dirt"
   };
   
-  elements.unshift(bgEl); // Ставимо фон на найнижчий шар
+  elements.unshift(bgEl);
   selectEl(id);
 }
 
-// ➕ Створення будь-якого елемента
 function createEl(type) {
   const id = Date.now();
   let newEl = { 
@@ -127,7 +119,6 @@ function createEl(type) {
   selectEl(id);
 }
 
-// ⬆️ Шари: На передній план
 function moveLayerUp() {
   const idx = elements.findIndex(el => el.id === selectedId);
   if (idx !== -1 && idx < elements.length - 1) {
@@ -139,7 +130,6 @@ function moveLayerUp() {
   }
 }
 
-// ⬇️ Шари: На задній план
 function moveLayerDown() {
   const idx = elements.findIndex(el => el.id === selectedId);
   if (idx > 0) {
@@ -157,7 +147,6 @@ function selectEl(id) {
   renderProps();
 }
 
-// 🖼️ Отрисовка полотна
 function render() {
   const canvas = document.getElementById('canvas');
   if (!canvas) return;
@@ -170,7 +159,6 @@ function render() {
     div.style.left = (el.x * GRID_SCALE) + 'px';
     div.style.top = (el.y * GRID_SCALE) + 'px';
     
-    // Враховуємо реальне розширення слотів (1.25) для прев'ю
     let displayW = el.w;
     let displayH = el.h;
     if (el.type === 'list_player' || el.type === 'list_chest') {
@@ -193,7 +181,7 @@ function render() {
       gridHtml += '</div>';
       
       const labelText = el.type === 'list_player' ? '🎒 Інвентар' : `📦 Node: [${el.nodePos}]`;
-      div.innerHTML = `<span style="font-size:9px; position:absolute; top:-15px; left:0; color:#0fc5f7; white-space:nowrap;">${labelText}</span>` + gridHtml;
+      div.innerHTML = `<span style="font-size:9px; position:absolute; top:-15px; left:0; color:#66fcf1; white-space:nowrap;">${labelText}</span>` + gridHtml;
     } else if (el.type === 'title') {
       div.style.color = el.color;
       div.innerText = el.text;
@@ -220,7 +208,6 @@ function render() {
       div.innerText = el.text;
     }
 
-    // Drag and Drop (Тач і миша)
     const initDrag = (e) => {
       e.stopPropagation();
       selectEl(el.id);
@@ -279,7 +266,6 @@ function render() {
   buildCmd();
 }
 
-// ⚙️ Рендер панелі властивостей
 function renderProps() {
   const editor = document.getElementById('prop-editor');
   if (!editor) return;
@@ -304,7 +290,7 @@ function renderProps() {
     html += `
       <div class="prop-group">
         <label>Тип фону:</label>
-        <select onchange="updateVal('bgMode', this.value); renderProps();" style="width:100%; padding:6px; background:#121218; color:#fff; border:1px solid #333; border-radius:5px;">
+        <select onchange="updateVal('bgMode', this.value); renderProps();">
           <option value="color" ${el.bgMode === 'color' ? 'selected' : ''}>🎨 Колір (HEX)</option>
           <option value="texture" ${el.bgMode === 'texture' ? 'selected' : ''}>🖼️ Текстура (.png)</option>
           <option value="item" ${el.bgMode === 'item' ? 'selected' : ''}>🧱 ID Блоку (Item)</option>
@@ -391,7 +377,7 @@ function renderProps() {
       </div>
     </div>
 
-    <button onclick="removeEl(${el.id})" style="background:#ff3355; color:#fff; border:none; padding:8px; width:100%; border-radius:5px; cursor:pointer; font-weight:bold; margin-top:5px; font-size:12px;">🗑️ Видалити</button>
+    <button onclick="removeEl(${el.id})" style="background:#ff3355; color:#fff; border:none; padding:10px; width:100%; border-radius:6px; cursor:pointer; font-weight:bold; margin-top:8px;">🗑️ Видалити</button>
   `;
 
   editor.innerHTML = html;
@@ -412,15 +398,13 @@ function removeEl(id) {
   render();
 }
 
-// 🔨 Побудова підсумкового коду / команди
 function buildCmd() {
   let code = "";
 
   if (currentVersion >= 3) {
-    code += `formspec_version[${currentVersion}]`;
+    code += `formspec_version[${currentVersion}];`;
   }
 
-  // Обчислення точного розміру вікна з урахуванням сітки слотів (1.25x)
   let maxW = 12.5;
   let maxH = 10;
 
@@ -440,39 +424,39 @@ function buildCmd() {
   maxW = Math.max(12.5, Math.ceil(maxW + 0.5));
   maxH = Math.max(8, Math.ceil(maxH + 0.5));
 
-  code += `size[${maxW},${maxH}]`;
+  code += `size[${maxW},${maxH}];`;
 
   elements.forEach(el => {
     if (el.type === 'bg_custom') {
       if (el.bgMode === 'texture') {
-        code += "image[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + (el.texture || "default_stone.png") + "]";
+        code += "image[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + (el.texture || "default_stone.png") + "];";
       } else if (el.bgMode === 'item') {
-        code += "item_image[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + (el.item || "default:dirt") + "]";
+        code += "item_image[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + (el.item || "default:dirt") + "];";
       } else {
-        code += "box[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.color + "]";
+        code += "box[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.color + "];";
       }
     } else if (el.type === 'list_chest') {
-      code += "list[nodemeta:" + el.nodePos + ";main;" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";]";
+      code += "list[nodemeta:" + el.nodePos + ";main;" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";];";
     } else if (el.type === 'list_player') {
-      code += "list[current_player;main;" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";]";
+      code += "list[current_player;main;" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";];";
     } else if (el.type === 'label') {
-      code += "label[" + el.x + "," + el.y + ";" + el.text + "]";
+      code += "label[" + el.x + "," + el.y + ";" + el.text + "];";
     } else if (el.type === 'title') {
-      code += "hypertext[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";title;<global halign=center font=size=20><style color=" + el.color + "><b>" + el.text + "</b></style>]";
+      code += "hypertext[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";title;<global halign=center font=size=20><style color=" + el.color + "><b>" + el.text + "</b></style>];";
     } else if (el.type === 'box') {
-      code += "box[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.color + "]";
+      code += "box[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.color + "];";
     } else if (el.type === 'item_btn') {
-      code += "item_image_button[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.item + ";" + el.key + ";" + el.text + "]";
+      code += "item_image_button[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.item + ";" + el.key + ";" + el.text + "];";
     } else if (el.type === 'item_img') {
-      code += "item_image[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.item + "]";
+      code += "item_image[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.item + "];";
     } else if (el.type === 'field') {
-      code += "field[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.key + ";" + el.text + ";]";
+      code += "field[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.key + ";" + el.text + ";];";
     } else if (el.type === 'dropdown') {
-      code += "dropdown[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.key + ";" + el.options + ";1]";
+      code += "dropdown[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.key + ";" + el.options + ";1];";
     } else if (el.type === 'checkbox') {
-      code += "checkbox[" + el.x + "," + el.y + ";" + el.key + ";" + el.text + ";false]";
+      code += "checkbox[" + el.x + "," + el.y + ";" + el.key + ";" + el.text + ";false];";
     } else if (el.type === 'close_btn') {
-      code += "button_exit[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.key + ";" + el.text + "]";
+      code += "button_exit[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.key + ";" + el.text + "];";
     }
   });
 
