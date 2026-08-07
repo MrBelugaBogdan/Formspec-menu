@@ -56,7 +56,6 @@ function updateSidebarMenu() {
   const container = document.getElementById('sidebar-buttons');
   container.innerHTML = '';
 
-  // Кнопка швидкого створення фону
   const bgBtn = document.createElement('button');
   bgBtn.className = 'btn-bg';
   bgBtn.innerText = '🌅 Зробити Фон на всю сітку';
@@ -74,16 +73,15 @@ function updateSidebarMenu() {
   }
 }
 
-// 🌅 Створення фону (автоматично падає на найнижчий шар)
 function createBackground() {
   const id = Date.now();
   const bgEl = {
     id,
     type: 'bg_custom',
-    bgMode: 'color', // 'color' або 'texture' або 'item'
+    bgMode: 'color',
     x: 0,
     y: 0,
-    w: 12.5,
+    w: 16,
     h: 12,
     color: "#181824",
     texture: "default_stone.png",
@@ -106,17 +104,16 @@ function createEl(type) {
   
   if(type === 'title' || type === 'label') { newEl.w = 4; newEl.h = 0.8; newEl.text = "ЗАГОЛОВОК"; }
   if(type === 'list_player') { newEl.w = 8; newEl.h = 4; newEl.x = 0.25; newEl.y = 5.25; }
-  if(type === 'list_chest') { newEl.w = 9; newEl.h = 3; newEl.x = 0.25; newEl.y = 0.5; }
+  if(type === 'list_chest') { newEl.w = 8; newEl.h = 4; newEl.x = 0.25; newEl.y = 0.5; }
   if(type === 'item_btn') { newEl.w = 1.2; newEl.h = 1.2; newEl.text = "Купити"; newEl.item = "default:diamond"; }
   if(type === 'item_img') { newEl.w = 1.2; newEl.h = 1.2; newEl.item = "default:pick_mese"; }
   if(type === 'box') { newEl.w = 3; newEl.h = 1.5; newEl.color = "#111118"; }
-  if(type === 'bg_custom') { newEl.w = 12.5; newEl.h = 12; newEl.x = 0; newEl.y = 0; }
+  if(type === 'bg_custom') { newEl.w = 16; newEl.h = 12; newEl.x = 0; newEl.y = 0; }
 
   elements.push(newEl);
   selectEl(id);
 }
 
-// 🔝 Перемістити шар ВГОРУ (на передній план)
 function moveLayerUp() {
   const idx = elements.findIndex(el => el.id === selectedId);
   if (idx !== -1 && idx < elements.length - 1) {
@@ -128,7 +125,6 @@ function moveLayerUp() {
   }
 }
 
-// 🔻 Перемістити шар ВНИЗ (на задній план)
 function moveLayerDown() {
   const idx = elements.findIndex(el => el.id === selectedId);
   if (idx > 0) {
@@ -393,8 +389,20 @@ function buildCmd() {
   if (currentVersion >= 3) {
     code += `formspec_version[${currentVersion}]`;
   }
-  
-  code += "size[12.5,12]background[0,0;12.5,12;default_item_bg.png]";
+
+  // Обчислюємо динамічний розмір вікна, щоб елементи не вилітали за межі
+  let maxW = 12.5;
+  let maxH = 10;
+  elements.forEach(el => {
+    if (el.x + el.w > maxW) maxW = el.x + el.w;
+    if (el.y + el.h > maxH) maxH = el.y + el.h;
+  });
+
+  // Автоматично додаємо відступи за межами останніх елементів
+  maxW = Math.max(12.5, Math.ceil(maxW + 0.5));
+  maxH = Math.max(8, Math.ceil(maxH + 0.5));
+
+  code += `size[${maxW},${maxH}]`;
 
   elements.forEach(el => {
     if (el.type === 'bg_custom') {
