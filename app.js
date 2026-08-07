@@ -10,6 +10,7 @@ const ELEMENT_TYPES = {
   item_btn:    { minVer: 1, name: "💎 Предмет-Кнопка" },
   item_img:    { minVer: 1, name: "🧱 Блок (Картинка)" },
   box:         { minVer: 1, name: "🟦 Кольоровий Квадрат" },
+  bg_custom:   { minVer: 1, name: "🖼️ Кастомний Фон (ID / Текстура)" },
   field:       { minVer: 1, name: "📥 Поле вводу" },
   dropdown:    { minVer: 3, name: "📜 Випадаючий список" },
   checkbox:    { minVer: 1, name: "☑️ Чекбокс" },
@@ -78,12 +79,15 @@ function createBackground() {
   const id = Date.now();
   const bgEl = {
     id,
-    type: 'box',
+    type: 'bg_custom',
+    bgMode: 'color', // 'color' або 'texture' або 'item'
     x: 0,
     y: 0,
     w: 12.5,
     h: 12,
-    color: "#181824"
+    color: "#181824",
+    texture: "default_stone.png",
+    item: "default:dirt"
   };
   
   elements.unshift(bgEl);
@@ -95,6 +99,7 @@ function createEl(type) {
   let newEl = { 
     id, type, x: 0.5, y: 0.5, w: 2.5, h: 0.8, 
     text: "Текст", color: "#0fc5f7", item: "default:diamond", 
+    texture: "default_wood.png", bgMode: "color",
     key: "btn_" + id, options: "Опція 1,Опція 2",
     nodePos: "17014,443,16012"
   };
@@ -105,6 +110,7 @@ function createEl(type) {
   if(type === 'item_btn') { newEl.w = 1.2; newEl.h = 1.2; newEl.text = "Купити"; newEl.item = "default:diamond"; }
   if(type === 'item_img') { newEl.w = 1.2; newEl.h = 1.2; newEl.item = "default:pick_mese"; }
   if(type === 'box') { newEl.w = 3; newEl.h = 1.5; newEl.color = "#111118"; }
+  if(type === 'bg_custom') { newEl.w = 12.5; newEl.h = 12; newEl.x = 0; newEl.y = 0; }
 
   elements.push(newEl);
   selectEl(id);
@@ -171,6 +177,17 @@ function render() {
       div.innerText = el.text;
     } else if (el.type === 'box') {
       div.style.background = el.color;
+    } else if (el.type === 'bg_custom') {
+      if (el.bgMode === 'color') {
+        div.style.background = el.color;
+        div.innerText = "🎨 Кольоровий Фон";
+      } else if (el.bgMode === 'texture') {
+        div.style.background = "#222";
+        div.innerHTML = `🖼️ Текстура:<br><span class="item-id-tag">${el.texture}</span>`;
+      } else {
+        div.style.background = "#1a1a1a";
+        div.innerHTML = `🧱 ID Предмета:<br><span class="item-id-tag">${el.item}</span>`;
+      }
     } else if (el.type === 'item_btn' || el.type === 'item_img') {
       div.innerHTML = `
         <div style="font-size:14px;">📦</div>
@@ -258,6 +275,35 @@ function renderProps() {
     </div>
   `;
 
+  if (el.type === 'bg_custom') {
+    html += `
+      <div class="prop-group">
+        <label>Тип фону:</label>
+        <select onchange="updateVal('bgMode', this.value); renderProps();" style="width:100%; padding:6px; background:#121218; color:#fff; border:1px solid #333; border-radius:5px;">
+          <option value="color" ${el.bgMode === 'color' ? 'selected' : ''}>🎨 Колір (HEX)</option>
+          <option value="texture" ${el.bgMode === 'texture' ? 'selected' : ''}>🖼️ Текстура (.png)</option>
+          <option value="item" ${el.bgMode === 'item' ? 'selected' : ''}>🧱 ID Блоку (Item)</option>
+        </select>
+      </div>
+    `;
+
+    if (el.bgMode === 'texture') {
+      html += `
+        <div class="prop-group">
+          <label>Назва файла текстури (напр. default_stone.png):</label>
+          <input type="text" value="${el.texture || 'default_stone.png'}" oninput="updateVal('texture', this.value)">
+        </div>
+      `;
+    } else if (el.bgMode === 'item') {
+      html += `
+        <div class="prop-group">
+          <label>ID Блоку / Предмета (напр. default:dirt):</label>
+          <input type="text" value="${el.item || 'default:dirt'}" oninput="updateVal('item', this.value)">
+        </div>
+      `;
+    }
+  }
+
   if (el.type === 'list_chest') {
     html += `
       <div class="prop-group">
@@ -285,7 +331,7 @@ function renderProps() {
     `;
   }
 
-  if (el.type === 'title' || el.type === 'box') {
+  if (el.type === 'title' || el.type === 'box' || (el.type === 'bg_custom' && el.bgMode === 'color')) {
     html += `
       <div class="prop-group">
         <label>Колір:</label>
@@ -351,7 +397,15 @@ function buildCmd() {
   code += "size[12.5,12]background[0,0;12.5,12;default_item_bg.png]";
 
   elements.forEach(el => {
-    if (el.type === 'list_chest') {
+    if (el.type === 'bg_custom') {
+      if (el.bgMode === 'texture') {
+        code += "image[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + (el.texture || "default_stone.png") + "]";
+      } else if (el.bgMode === 'item') {
+        code += "item_image[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + (el.item || "default:dirt") + "]";
+      } else {
+        code += "box[" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";" + el.color + "]";
+      }
+    } else if (el.type === 'list_chest') {
       code += "list[nodemeta:" + el.nodePos + ";main;" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";]";
     } else if (el.type === 'list_player') {
       code += "list[current_player;main;" + el.x + "," + el.y + ";" + el.w + "," + el.h + ";]";
