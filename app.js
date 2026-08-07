@@ -2,7 +2,8 @@ let currentVersion = 7;
 let elements = [];
 let selectedId = null;
 
-const GRID_SCALE = 32;
+// Масштаб: 1 одиниця Formspec = 40px у браузері
+const GRID_SCALE = 40; 
 
 const ELEMENT_TYPES = {
   label:       { minVer: 1, name: "📝 Текст (Простий)" },
@@ -12,7 +13,7 @@ const ELEMENT_TYPES = {
   item_btn:    { minVer: 1, name: "💎 Предмет-Кнопка" },
   item_img:    { minVer: 1, name: "🧱 Блок (Картинка)" },
   box:         { minVer: 1, name: "🟦 Кольоровий Квадрат" },
-  bg_custom:   { minVer: 1, name: "🖼️ Кастомний Фон (ID / Текстура)" },
+  bg_custom:   { minVer: 1, name: "🖼️ Кастомний Фон" },
   field:       { minVer: 1, name: "📥 Поле вводу" },
   dropdown:    { minVer: 3, name: "📜 Випадаючий список" },
   checkbox:    { minVer: 1, name: "☑️ Чекбокс" },
@@ -24,28 +25,23 @@ function checkAuth() {
   const keyFromUrl = urlParams.get('key') || "";
   const inputPass = document.getElementById('pass-input').value.trim();
 
-  // Отримуємо хеш з config.js
   const targetHash = (typeof PASSPHRASE_HASH !== 'undefined') ? PASSPHRASE_HASH : "";
 
-  // Якщо хеш не задано в config.js
   if (!targetHash) {
-    console.error("Помилка: PASSPHRASE_HASH не знайдено в config.js!");
+    console.error("Помилка: PASSPHRASE_HASH не визначений в config.js!");
     return;
   }
 
-  // Перевірка 1: за посиланням з ?key=
   if (keyFromUrl !== "" && md5(keyFromUrl) === targetHash) {
     showApp();
     return;
   }
 
-  // Перевірка 2: за введеним паролем у полі
   if (inputPass !== "" && md5(inputPass) === targetHash) {
     showApp();
     return;
   }
 
-  // Якщо натиснули кнопку входу, а пароль невірний
   if (inputPass !== "") {
     alert("❌ Невірний пароль!");
   }
@@ -57,17 +53,12 @@ function showApp() {
   updateSidebarMenu();
 }
 
-// ПРИБЕРИ або ЗАМІНИ window.onload:
-// Не викликаємо checkAuth() автоматично на старті, 
-// а лише якщо є параметр key в URL
 window.onload = function() {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.has('key')) {
     checkAuth();
   }
 };
-
-window.onload = checkAuth;
 
 function changeVersion() {
   currentVersion = parseInt(document.getElementById('fv-select').value);
@@ -79,7 +70,7 @@ function changeVersion() {
   });
 
   if (elements.length < beforeCount) {
-    alert("Деякі елементи видалено, оскільки вони не підтримуються у v" + currentVersion);
+    alert("Деякі елементи видалено, бо вони не підтримуються у v" + currentVersion);
     selectedId = null;
     renderProps();
   }
@@ -118,8 +109,8 @@ function createBackground() {
     bgMode: 'color',
     x: 0,
     y: 0,
-    w: 16,
-    h: 12,
+    w: 12,
+    h: 8,
     color: "#181824",
     texture: "default_stone.png",
     item: "default:dirt"
@@ -140,12 +131,12 @@ function createEl(type) {
   };
   
   if(type === 'title' || type === 'label') { newEl.w = 4; newEl.h = 0.8; newEl.text = "ЗАГОЛОВОК"; }
-  if(type === 'list_player') { newEl.w = 8; newEl.h = 4; newEl.x = 0.25; newEl.y = 5.25; }
-  if(type === 'list_chest') { newEl.w = 8; newEl.h = 4; newEl.x = 0.25; newEl.y = 0.5; }
-  if(type === 'item_btn') { newEl.w = 1.2; newEl.h = 1.2; newEl.text = "Купити"; newEl.item = "default:diamond"; }
-  if(type === 'item_img') { newEl.w = 1.2; newEl.h = 1.2; newEl.item = "default:pick_mese"; }
+  if(type === 'list_player') { newEl.w = 8; newEl.h = 4; newEl.x = 0.5; newEl.y = 4.5; }
+  if(type === 'list_chest') { newEl.w = 8; newEl.h = 3; newEl.x = 0.5; newEl.y = 0.5; }
+  if(type === 'item_btn') { newEl.w = 1.1; newEl.h = 1.1; newEl.text = "Купити"; newEl.item = "default:diamond"; }
+  if(type === 'item_img') { newEl.w = 1.1; newEl.h = 1.1; newEl.item = "default:pick_mese"; }
   if(type === 'box') { newEl.w = 3; newEl.h = 1.5; newEl.color = "#111118"; }
-  if(type === 'bg_custom') { newEl.w = 16; newEl.h = 12; newEl.x = 0; newEl.y = 0; }
+  if(type === 'bg_custom') { newEl.w = 12; newEl.h = 8; newEl.x = 0; newEl.y = 0; }
 
   elements.push(newEl);
   selectEl(id);
@@ -184,6 +175,25 @@ function render() {
   if (!canvas) return;
   canvas.innerHTML = '';
 
+  // Обчислення точних розмірів полотна залежно від елементів
+  let maxW = 12;
+  let maxH = 8;
+
+  elements.forEach(el => {
+    let realW = el.w;
+    let realH = el.h;
+    if (el.type === 'list_player' || el.type === 'list_chest') {
+      realW = el.w * 1.25;
+      realH = el.h * 1.25;
+    }
+    if (el.x + realW > maxW) maxW = el.x + realW;
+    if (el.y + realH > maxH) maxH = el.y + realH;
+  });
+
+  // Автоматичний розмір Canvas під розмір Formspec
+  canvas.style.width = (maxW * GRID_SCALE) + 'px';
+  canvas.style.height = (maxH * GRID_SCALE) + 'px';
+
   elements.forEach(el => {
     const div = document.createElement('div');
     div.className = `gui-el type-${el.type} ${el.id === selectedId ? 'active' : ''}`;
@@ -213,7 +223,7 @@ function render() {
       gridHtml += '</div>';
       
       const labelText = el.type === 'list_player' ? '🎒 Інвентар' : `📦 Node: [${el.nodePos}]`;
-      div.innerHTML = `<span style="font-size:9px; position:absolute; top:-15px; left:0; color:#66fcf1; white-space:nowrap;">${labelText}</span>` + gridHtml;
+      div.innerHTML = `<span style="font-size:9px; position:absolute; top:-14px; left:0; color:#66fcf1; white-space:nowrap;">${labelText}</span>` + gridHtml;
     } else if (el.type === 'title') {
       div.style.color = el.color;
       div.innerText = el.text;
@@ -232,9 +242,9 @@ function render() {
       }
     } else if (el.type === 'item_btn' || el.type === 'item_img') {
       div.innerHTML = `
-        <div style="font-size:14px;">📦</div>
+        <div style="font-size:12px;">📦</div>
         <div class="item-id-tag">${el.item}</div>
-        ${el.type === 'item_btn' ? `<div style="font-size:10px; margin-top:2px;">${el.text}</div>` : ''}
+        ${el.type === 'item_btn' ? `<div style="font-size:9px;">${el.text}</div>` : ''}
       `;
     } else {
       div.innerText = el.text;
@@ -304,13 +314,13 @@ function renderProps() {
   const el = elements.find(item => item.id === selectedId);
 
   if (!el) {
-    editor.innerHTML = '<p style="color: #666; font-size: 12px;">Нічого не обрано</p>';
+    editor.innerHTML = '<p style="color: #666; font-size: 11px;">Нічого не обрано</p>';
     return;
   }
 
   let html = `
-    <div style="margin-bottom: 12px;">
-      <label style="font-size: 11px; color: #aaa;">Порядок шару:</label>
+    <div style="margin-bottom: 10px;">
+      <label style="font-size: 10px; color: #aaa;">Порядок шару:</label>
       <div class="layer-controls">
         <button class="btn-layer" onclick="moveLayerUp()">⬆️ Вгору</button>
         <button class="btn-layer" onclick="moveLayerDown()">⬇️ Вниз</button>
@@ -340,7 +350,7 @@ function renderProps() {
     } else if (el.bgMode === 'item') {
       html += `
         <div class="prop-group">
-          <label>ID Блоку / Предмета (напр. default:dirt):</label>
+          <label>ID Блоку (напр. default:dirt):</label>
           <input type="text" value="${el.item || 'default:dirt'}" oninput="updateVal('item', this.value)">
         </div>
       `;
@@ -409,7 +419,7 @@ function renderProps() {
       </div>
     </div>
 
-    <button onclick="removeEl(${el.id})" style="background:#ff3355; color:#fff; border:none; padding:10px; width:100%; border-radius:6px; cursor:pointer; font-weight:bold; margin-top:8px;">🗑️ Видалити</button>
+    <button onclick="removeEl(${el.id})" style="background:#ff3355; color:#fff; border:none; padding:8px; width:100%; border-radius:5px; cursor:pointer; font-weight:bold; margin-top:6px; font-size:11px;">🗑️ Видалити</button>
   `;
 
   editor.innerHTML = html;
@@ -437,8 +447,8 @@ function buildCmd() {
     code += `formspec_version[${currentVersion}];`;
   }
 
-  let maxW = 12.5;
-  let maxH = 10;
+  let maxW = 12;
+  let maxH = 8;
 
   elements.forEach(el => {
     let realW = el.w;
@@ -452,9 +462,6 @@ function buildCmd() {
     if (el.x + realW > maxW) maxW = el.x + realW;
     if (el.y + realH > maxH) maxH = el.y + realH;
   });
-
-  maxW = Math.max(12.5, Math.ceil(maxW + 0.5));
-  maxH = Math.max(8, Math.ceil(maxH + 0.5));
 
   code += `size[${maxW},${maxH}];`;
 
