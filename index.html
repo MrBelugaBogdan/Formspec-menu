@@ -2,70 +2,79 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>MultiCraft Formspec Builder</title>
-  
-  <!-- Іконка вкладки -->
-  <link rel="icon" type="image/png" href="favicon.png">
-
-  <!-- Стилі -->
-  <link rel="stylesheet" href="styles.css">
-
-  <!-- Скрипт MD5 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minetest Formspec Builder</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Бібліотека MD5 для хешування пароля -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
+  <script>
+    // 🔑 Вкажи сюди MD5-хеш свого пароля (зараз стоїть хеш від "123456")
+    const PASSPHRASE_HASH = "e10adc3949ba59abbe56e057f20f883e";
+  </script>
 </head>
 <body>
 
-  <div id="auth-screen">
-    <h2>🔒 Вхід до Builder</h2>
-    <p>Введіть секретний ключ доступу</p>
-    <input type="password" id="pass-input" placeholder="Пароль..." onkeyup="if(event.key==='Enter') checkAuth()">
-    <button onclick="checkAuth()">Увійти</button>
+  <!-- Вікно Авторизації -->
+  <div id="auth-screen" class="auth-container">
+    <div class="auth-box">
+      <h2>🔒 Доступ обмежено</h2>
+      <p>Введіть пароль для доступу до конструктора:</p>
+      <input type="password" id="pass-input" placeholder="Пароль..." onkeypress="if(event.key==='Enter') checkAuth()">
+      <button onclick="checkAuth()">Увійти</button>
+    </div>
   </div>
 
-  <div id="app">
-    <header>
-      <h1>🛠️ MultiCraft Formspec Builder</h1>
-      <div class="version-selector">
+  <!-- Головний Додаток -->
+  <div id="app" style="display: none;">
+    <!-- Ліва панель: Версія та додавання елементів -->
+    <div class="sidebar">
+      <h3>🧩 Елементи</h3>
+      
+      <div class="prop-group">
         <label for="fv-select">Версія Formspec:</label>
         <select id="fv-select" onchange="changeVersion()">
           <option value="1">v1 (Стара)</option>
-          <option value="2">v2</option>
           <option value="3">v3</option>
           <option value="4">v4</option>
           <option value="5">v5</option>
           <option value="6">v6</option>
-          <option value="7" selected>v7 (Нова)</option>
+          <option value="7" selected>v7 (Сучасна)</option>
         </select>
       </div>
-    </header>
 
-    <div class="main-layout">
-      <div class="sidebar">
-        <h3>Елементи</h3>
-        <div id="sidebar-buttons"></div>
+      <div id="sidebar-buttons" class="button-list">
+        <!-- Кнопки додаються динамічно через app.js -->
       </div>
+    </div>
 
-      <div class="canvas-container">
-        <div class="gui-box" id="canvas"></div>
+    <!-- Центральна зона: Canvas Редактора -->
+    <div class="editor-area">
+      <div class="canvas-header">
+        <span>🎨 Полотно Formspec</span>
       </div>
-
-      <div class="properties">
-        <h3>Властивості</h3>
-        <div id="prop-editor">
-          <p style="color: #666; font-size: 12px;">Оберіть елемент для редагування.</p>
+      <div id="canvas-container">
+        <div id="canvas"></div>
+      </div>
+      
+      <!-- Нижнє поле з готовим кодом -->
+      <div class="output-area">
+        <label for="cmd-result">Готова команда / Formspec код:</label>
+        <div class="output-row">
+          <textarea id="cmd-result" readonly></textarea>
+          <button onclick="copyResult()">📋 Копіювати</button>
         </div>
       </div>
     </div>
 
-    <div class="footer">
-      <textarea id="cmd-result" readonly></textarea>
-      <button class="btn-copy" onclick="copyResult()">📋 Скопіювати</button>
+    <!-- Права панель: Властивості обраного елемента -->
+    <div class="properties-panel">
+      <h3>⚙️ Властивості</h3>
+      <div id="prop-editor">
+        <p style="color: #666; font-size: 12px;">Нічого не обрано</p>
+      </div>
     </div>
   </div>
 
-  <!-- Підключення логіки сайту -->
-  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
