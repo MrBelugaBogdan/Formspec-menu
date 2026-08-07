@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Minetest Formspec Builder</title>
   
-  <!-- Бібліотека MD5 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
-  <!-- Конфіг з паролем -->
   <script src="config.js"></script>
 
   <style>
@@ -19,11 +17,12 @@
       user-select: none;
     }
 
-    body {
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
       background-color: #0b0c10;
       color: #c5c6c7;
-      height: 100vh;
-      overflow: hidden;
     }
 
     /* Авторизація */
@@ -37,7 +36,7 @@
 
     .auth-box {
       background: #1f2833;
-      padding: 35px;
+      padding: 30px;
       border-radius: 12px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.7);
       text-align: center;
@@ -49,7 +48,7 @@
     .auth-box p { margin-bottom: 18px; font-size: 13px; color: #c5c6c7; }
     .auth-box input {
       width: 100%;
-      padding: 12px;
+      padding: 10px;
       margin-bottom: 15px;
       border-radius: 6px;
       border: 1px solid #45a29e;
@@ -59,35 +58,35 @@
     }
     .auth-box button {
       width: 100%;
-      padding: 12px;
+      padding: 10px;
       background: #66fcf1;
       border: none;
       border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
       color: #0b0c10;
-      transition: 0.2s;
     }
-    .auth-box button:hover { background: #45a29e; color: #fff; }
 
-    /* Головний макет */
+    /* Макет додатку */
     #app {
       display: flex;
-      height: 100vh;
       width: 100vw;
+      height: 100vh;
+      overflow: hidden;
     }
 
-    /* Ліва і Права панелі */
+    /* Бічні панелі зі строгим обмеженням за висотою */
     .sidebar, .properties-panel {
-      width: 300px;
-      min-width: 300px;
+      width: 280px;
+      min-width: 280px;
+      max-height: 100vh;
       background: #1f2833;
       border-right: 1px solid #2c3540;
-      padding: 18px;
+      padding: 15px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 12px;
     }
 
     .properties-panel {
@@ -96,67 +95,60 @@
     }
 
     h3 {
-      font-size: 13px;
+      font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 1.2px;
       color: #66fcf1;
-      margin-bottom: 8px;
+      margin-bottom: 5px;
     }
 
-    /* Кнопки вибору */
     .button-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .btn-add, .btn-bg {
-      padding: 10px 12px;
+      padding: 8px 10px;
       background: #11141a;
       border: 1px solid #2c3540;
       color: #c5c6c7;
       border-radius: 6px;
       cursor: pointer;
       text-align: left;
-      font-size: 13px;
+      font-size: 12px;
       transition: all 0.2s;
     }
 
-    .btn-add:hover {
-      background: #2c3540;
-      color: #66fcf1;
-      border-color: #66fcf1;
-    }
-
-    .btn-bg {
-      background: #2e1d38;
-      border-color: #6b2d86;
-      color: #e0b0ff;
-      font-weight: bold;
-    }
+    .btn-add:hover { background: #2c3540; color: #66fcf1; border-color: #66fcf1; }
+    .btn-bg { background: #2e1d38; border-color: #6b2d86; color: #e0b0ff; font-weight: bold; }
     .btn-bg:hover { background: #432554; border-color: #a855f7; }
 
-    /* Центральна зона */
+    /* Центральна частина редактора */
     .editor-area {
       flex: 1;
       display: flex;
       flex-direction: column;
+      height: 100vh;
       background: #0b0c10;
+      overflow: hidden;
     }
 
     .canvas-header {
-      padding: 12px 20px;
+      padding: 10px 15px;
       background: #14171d;
       border-bottom: 1px solid #1f2833;
-      font-size: 13px;
+      font-size: 12px;
       color: #66fcf1;
       font-weight: bold;
+      flex-shrink: 0;
     }
 
+    /* Зона скролінгу полотна */
     #canvas-container {
       flex: 1;
       overflow: auto;
-      padding: 25px;
+      padding: 20px;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -164,17 +156,17 @@
       background-size: 20px 20px;
     }
 
+    /* Полотно (Canvas) з динамiчним розмiром */
     #canvas {
       position: relative;
-      width: 800px;
-      height: 600px;
       background: #14171d;
       border: 2px dashed #45a29e;
-      border-radius: 8px;
+      border-radius: 6px;
       box-shadow: 0 0 25px rgba(0,0,0,0.8);
+      transition: width 0.1s, height 0.1s;
     }
 
-    /* Елементи на полотні */
+    /* Елементи GUI */
     .gui-el {
       position: absolute;
       border: 1px dashed rgba(255,255,255,0.3);
@@ -189,7 +181,7 @@
       overflow: hidden;
       text-align: center;
       word-break: break-all;
-      border-radius: 4px;
+      border-radius: 3px;
     }
 
     .gui-el.active {
@@ -200,13 +192,11 @@
 
     .gui-el.type-bg_custom { z-index: 1; border: none; }
     .gui-el.type-box { z-index: 2; }
-    
     .gui-el.type-list_chest, .gui-el.type-list_player {
       background: rgba(69, 162, 158, 0.1);
       border: 1px solid #45a29e;
     }
 
-    /* Сітка інвентаря */
     .slot-grid-preview {
       display: grid;
       width: 100%;
@@ -223,7 +213,7 @@
 
     .item-id-tag {
       background: #000;
-      padding: 2px 5px;
+      padding: 2px 4px;
       border-radius: 3px;
       font-family: monospace;
       font-size: 9px;
@@ -235,90 +225,86 @@
     .prop-group {
       display: flex;
       flex-direction: column;
-      gap: 5px;
-      margin-bottom: 12px;
+      gap: 4px;
+      margin-bottom: 8px;
     }
 
-    .prop-group label { font-size: 11px; color: #8892b0; }
+    .prop-group label { font-size: 10px; color: #8892b0; }
 
     .prop-group input, .prop-group select {
-      padding: 8px;
+      padding: 6px;
       background: #0b0c10;
       border: 1px solid #2c3540;
       color: #fff;
-      border-radius: 5px;
-      font-size: 12px;
+      border-radius: 4px;
+      font-size: 11px;
       outline: none;
     }
 
-    .prop-group input:focus, .prop-group select:focus {
-      border-color: #66fcf1;
-    }
-
+    .prop-group input:focus, .prop-group select:focus { border-color: #66fcf1; }
     .color-picker-row { display: flex; gap: 6px; }
 
     .color-picker-row input[type="color"] {
-      width: 38px;
-      height: 34px;
+      width: 32px;
+      height: 28px;
       padding: 0;
       cursor: pointer;
     }
 
-    .layer-controls { display: flex; gap: 6px; margin-top: 4px; }
+    .layer-controls { display: flex; gap: 5px; margin-top: 2px; }
 
     .btn-layer {
       flex: 1;
-      padding: 8px;
+      padding: 6px;
       background: #11141a;
       border: 1px solid #2c3540;
       color: #c5c6c7;
-      font-size: 11px;
-      border-radius: 5px;
+      font-size: 10px;
+      border-radius: 4px;
       cursor: pointer;
     }
     .btn-layer:hover { background: #2c3540; color: #fff; }
 
-    /* Поле виводу коду */
+    /* Поле виводу знизу */
     .output-area {
-      padding: 15px 20px;
+      padding: 10px 15px;
       background: #14171d;
       border-top: 1px solid #1f2833;
+      flex-shrink: 0;
     }
 
     .output-area label {
       display: block;
-      font-size: 11px;
+      font-size: 10px;
       color: #8892b0;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
-    .output-row { display: flex; gap: 10px; }
+    .output-row { display: flex; gap: 8px; }
 
     #cmd-result {
       flex: 1;
-      height: 48px;
+      height: 40px;
       background: #0b0c10;
       border: 1px solid #2c3540;
       color: #66fcf1;
       font-family: monospace;
-      font-size: 12px;
-      padding: 8px 12px;
-      border-radius: 6px;
+      font-size: 11px;
+      padding: 6px;
+      border-radius: 4px;
       resize: none;
       outline: none;
     }
 
     .output-row button {
-      padding: 0 18px;
+      padding: 0 14px;
       background: #66fcf1;
       border: none;
-      border-radius: 6px;
+      border-radius: 4px;
       font-weight: bold;
       cursor: pointer;
       color: #0b0c10;
-      transition: 0.2s;
     }
-    .output-row button:hover { background: #45a29e; color: #fff; }
   </style>
 </head>
 <body>
@@ -335,7 +321,6 @@
 
   <!-- Головний додаток -->
   <div id="app" style="display: none;">
-    <!-- Ліва панель -->
     <div class="sidebar">
       <h3>🧩 Елементи</h3>
       
@@ -354,11 +339,8 @@
       <div id="sidebar-buttons" class="button-list"></div>
     </div>
 
-    <!-- Центральна зона -->
     <div class="editor-area">
-      <div class="canvas-header">
-        🎨 Полотно Formspec
-      </div>
+      <div class="canvas-header">🎨 Полотно Formspec</div>
       <div id="canvas-container">
         <div id="canvas"></div>
       </div>
@@ -372,11 +354,10 @@
       </div>
     </div>
 
-    <!-- Права панель -->
     <div class="properties-panel">
       <h3>⚙️ Властивості</h3>
       <div id="prop-editor">
-        <p style="color: #666; font-size: 12px;">Нічого не обрано</p>
+        <p style="color: #666; font-size: 11px;">Нічого не обрано</p>
       </div>
     </div>
   </div>
