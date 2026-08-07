@@ -24,16 +24,48 @@ function checkAuth() {
   const keyFromUrl = urlParams.get('key') || "";
   const inputPass = document.getElementById('pass-input').value.trim();
 
+  // Отримуємо хеш з config.js
   const targetHash = (typeof PASSPHRASE_HASH !== 'undefined') ? PASSPHRASE_HASH : "";
 
-  if (!targetHash || md5(keyFromUrl) === targetHash || md5(inputPass) === targetHash) {
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    updateSidebarMenu();
-  } else if (inputPass !== "") {
-    alert("Невірний пароль!");
+  // Якщо хеш не задано в config.js
+  if (!targetHash) {
+    console.error("Помилка: PASSPHRASE_HASH не знайдено в config.js!");
+    return;
+  }
+
+  // Перевірка 1: за посиланням з ?key=
+  if (keyFromUrl !== "" && md5(keyFromUrl) === targetHash) {
+    showApp();
+    return;
+  }
+
+  // Перевірка 2: за введеним паролем у полі
+  if (inputPass !== "" && md5(inputPass) === targetHash) {
+    showApp();
+    return;
+  }
+
+  // Якщо натиснули кнопку входу, а пароль невірний
+  if (inputPass !== "") {
+    alert("❌ Невірний пароль!");
   }
 }
+
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  updateSidebarMenu();
+}
+
+// ПРИБЕРИ або ЗАМІНИ window.onload:
+// Не викликаємо checkAuth() автоматично на старті, 
+// а лише якщо є параметр key в URL
+window.onload = function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('key')) {
+    checkAuth();
+  }
+};
 
 window.onload = checkAuth;
 
