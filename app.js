@@ -73,7 +73,7 @@ function updateSidebarMenu() {
   }
 }
 
-// 🌅 Створення фону (автоматично ставиться в найнижчий шар — на задній план)
+// 🌅 Створення фону (автоматично падає на найнижчий шар)
 function createBackground() {
   const id = Date.now();
   const bgEl = {
@@ -86,7 +86,6 @@ function createBackground() {
     color: "#181824"
   };
   
-  // Додаємо фон на самий початок масиву (щоб він рендерився першим на задньому плані)
   elements.unshift(bgEl);
   selectEl(id);
 }
